@@ -62,6 +62,7 @@ def augment_data(orig_dat, syn_dat, data_path):
 
 if __name__ == '__main__':
     gens = {0: "llm", 1: "gan"}
-    gen = gens[1]
-    parent_path = "./{}_data/".format(gen)
-    augment_data("data.csv", "syn_hybrid.csv", parent_path)
+    for i in range(len(gens)):
+        gen = gens[i]
+        parent_path = "./{}_data/".format(gen)
+        augment_data("data.csv", "syn_hybrid.csv", parent_path)
