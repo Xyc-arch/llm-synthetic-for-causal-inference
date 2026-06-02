@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import sys
 import json
@@ -13,6 +14,7 @@ from algs.ipw import estimate_ipw_df
 from algs.outcome_regression import estimate_outcome_regression_df
 from algs.tmle import estimate_tmle_df
 
+
 # =========================
 # Paths
 # =========================
@@ -26,8 +28,9 @@ SYN_SOURCES = {
 }
 
 OUT_DIR = os.path.join(PROJECT_ROOT, "simulator", "results")
-OUT_JSON = os.path.join(OUT_DIR, "simulation_engine_global_hybrid.json")
-OUT_CSV = os.path.join(OUT_DIR, "simulation_engine_global_hybrid_summary.csv")
+OUT_JSON = os.path.join(OUT_DIR, "simulation_engine_global_hybrid_self_ref.json")
+OUT_CSV = os.path.join(OUT_DIR, "simulation_engine_global_hybrid_self_ref_summary.csv")
+
 
 # =========================
 # Experiment setup
@@ -52,6 +55,8 @@ ESTIMATORS = {
     "aipw": estimate_aipw_df,
     "outcome_regression": estimate_outcome_regression_df,
 }
+
+SYNTHETIC_REFERENCE_ESTIMATOR = "tmle"
 
 
 # =========================
@@ -79,6 +84,7 @@ def evaluate_estimator(df, estimator_name):
 def sample_without_replacement(df, n, seed):
     if n > len(df):
         raise ValueError(f"Requested sample size {n} exceeds pool size {len(df)}.")
+
     rng = np.random.default_rng(seed)
     idx = rng.choice(df.index.to_numpy(), size=n, replace=False)
     return df.loc[idx].reset_index(drop=True)
@@ -86,19 +92,92 @@ def sample_without_replacement(df, n, seed):
 
 def summarize_against_truth(estimates, truth_value):
     arr = np.asarray(estimates, dtype=float)
-    errors = arr - truth_value
+    errors = arr - float(truth_value)
+    abs_errors = np.abs(errors)
+    sq_errors = errors ** 2
+
+    n = len(arr)
+
+    mean_estimate = float(np.mean(arr))
+    std_estimate = float(np.std(arr, ddof=1)) if n > 1 else 0.0
+    se_estimate = float(std_estimate / np.sqrt(n)) if n > 1 else 0.0
+
+    bias = float(mean_estimate - truth_value)
+    bias_std = float(np.std(errors, ddof=1)) if n > 1 else 0.0
+    bias_se = float(bias_std / np.sqrt(n)) if n > 1 else 0.0
+
+    mae = float(np.mean(abs_errors))
+    mae_std = float(np.std(abs_errors, ddof=1)) if n > 1 else 0.0
+    mae_se = float(mae_std / np.sqrt(n)) if n > 1 else 0.0
+
+    mse = float(np.mean(sq_errors))
+    mse_std = float(np.std(sq_errors, ddof=1)) if n > 1 else 0.0
+    mse_se = float(mse_std / np.sqrt(n)) if n > 1 else 0.0
+
     return {
-        "n": int(len(arr)),
+        "n": int(n),
         "estimates": arr.tolist(),
-        "mean_estimate": float(np.mean(arr)),
-        "bias": float(np.mean(arr) - truth_value),
-        "abs_bias": float(abs(np.mean(arr) - truth_value)),
-        "var": float(np.var(arr, ddof=1)) if len(arr) > 1 else 0.0,
-        "mse": float(np.mean(errors ** 2)),
-        "rmse": float(np.sqrt(np.mean(errors ** 2))),
+
+        "mean_estimate": mean_estimate,
+        "std_estimate": std_estimate,
+        "se_estimate": se_estimate,
+        "estimate_ci95_low": float(mean_estimate - 1.96 * se_estimate),
+        "estimate_ci95_high": float(mean_estimate + 1.96 * se_estimate),
+
+        "bias": bias,
+        "bias_std": bias_std,
+        "bias_se": bias_se,
+        "abs_bias": float(abs(bias)),
+
+        "mae": mae,
+        "mae_std": mae_std,
+        "mae_se": mae_se,
+
+        "var": float(np.var(arr, ddof=1)) if n > 1 else 0.0,
+
+        "mse": mse,
+        "mse_std": mse_std,
+        "mse_se": mse_se,
+        "mse_ci95_low": float(max(0.0, mse - 1.96 * mse_se)),
+        "mse_ci95_high": float(mse + 1.96 * mse_se),
+
+        "rmse": float(np.sqrt(mse)),
         "min": float(np.min(arr)),
         "max": float(np.max(arr)),
         "truth": float(truth_value),
+    }
+
+
+def add_summary_fields(prefix, summary):
+    return {
+        f"{prefix}_mean_estimate": float(summary["mean_estimate"]),
+        f"{prefix}_std_estimate": float(summary["std_estimate"]),
+        f"{prefix}_se_estimate": float(summary["se_estimate"]),
+        f"{prefix}_estimate_ci95_low": float(summary["estimate_ci95_low"]),
+        f"{prefix}_estimate_ci95_high": float(summary["estimate_ci95_high"]),
+
+        f"{prefix}_bias": float(summary["bias"]),
+        f"{prefix}_bias_std": float(summary["bias_std"]),
+        f"{prefix}_bias_se": float(summary["bias_se"]),
+        f"{prefix}_abs_bias": float(summary["abs_bias"]),
+
+        f"{prefix}_mae": float(summary["mae"]),
+        f"{prefix}_mae_std": float(summary["mae_std"]),
+        f"{prefix}_mae_se": float(summary["mae_se"]),
+
+        f"{prefix}_var": float(summary["var"]),
+
+        f"{prefix}_mse": float(summary["mse"]),
+        f"{prefix}_mse_std": float(summary["mse_std"]),
+        f"{prefix}_mse_se": float(summary["mse_se"]),
+        f"{prefix}_mse_ci95_low": float(summary["mse_ci95_low"]),
+        f"{prefix}_mse_ci95_high": float(summary["mse_ci95_high"]),
+        f"{prefix}_rmse": float(summary["rmse"]),
+
+        f"{prefix}_min": float(summary["min"]),
+        f"{prefix}_max": float(summary["max"]),
+        f"{prefix}_truth": float(summary["truth"]),
+        f"{prefix}_n": int(summary["n"]),
     }
 
 
@@ -125,6 +204,8 @@ def main():
             "covariates": COVARIATES,
             "outcome_col": OUTCOME_COL,
             "treatment_col": TREATMENT_COL,
+            "synthetic_reference_estimator": SYNTHETIC_REFERENCE_ESTIMATOR,
+            "synthetic_reference_type": "common_reference_estimator",
         },
         "real_truth": real_truth_meta,
         "real_group_against_real_truth": {},
@@ -145,6 +226,7 @@ def main():
         real_df = pd.read_csv(real_path)
 
         real_dataset_results[dataset_name] = {}
+
         for est_name in ESTIMATORS:
             est = evaluate_estimator(real_df, est_name)
             real_dataset_results[dataset_name][est_name] = {
@@ -152,6 +234,7 @@ def main():
                 "truth_real": real_ate_true,
                 "error_vs_real_truth": float(est - real_ate_true),
                 "abs_error_vs_real_truth": float(abs(est - real_ate_true)),
+                "sq_error_vs_real_truth": float((est - real_ate_true) ** 2),
             }
             real_collect[est_name].append(est)
 
@@ -180,21 +263,22 @@ def main():
 
         results["synthetic_engine"][source_name] = {
             "source_file": source_path,
-            "synthetic_reference_truths": {},
+            "synthetic_reference_truth": {},
             "replicate_summaries": {},
         }
 
-        # Estimator-specific synthetic reference truth on full synthetic pool
-        syn_ref_truths = {}
-        for est_name in ESTIMATORS:
-            syn_ref_truths[est_name] = evaluate_estimator(syn_pool, est_name)
+        # Common synthetic reference truth on full synthetic pool.
+        syn_reference_truth = evaluate_estimator(
+            syn_pool,
+            SYNTHETIC_REFERENCE_ESTIMATOR,
+        )
 
-        results["synthetic_engine"][source_name]["synthetic_reference_truths"] = {
-            est_name: {"estimate_on_full_hybrid_pool": float(val)}
-            for est_name, val in syn_ref_truths.items()
+        results["synthetic_engine"][source_name]["synthetic_reference_truth"] = {
+            "estimator_used": SYNTHETIC_REFERENCE_ESTIMATOR,
+            "estimate_on_full_hybrid_pool": float(syn_reference_truth),
         }
 
-        # Repeated subsamples of size 1000 from the hybrid pool
+        # Repeated subsamples of size 1000 from the hybrid pool.
         syn_rep_collect = {e: [] for e in ESTIMATORS}
 
         for rep in range(1, N_SYN_REPS + 1):
@@ -208,11 +292,11 @@ def main():
                 rep_est = evaluate_estimator(rep_df, est_name)
                 syn_rep_collect[est_name].append(rep_est)
 
-        # Summaries against synthetic truth and against real truth
+        # Summaries against common synthetic truth and against real truth.
         for est_name in ESTIMATORS:
             summary_internal = summarize_against_truth(
                 estimates=syn_rep_collect[est_name],
-                truth_value=syn_ref_truths[est_name],
+                truth_value=syn_reference_truth,
             )
             summary_vs_real = summarize_against_truth(
                 estimates=syn_rep_collect[est_name],
@@ -224,16 +308,25 @@ def main():
             comparison = {
                 "real_group_rmse": float(real_group_summary["rmse"]),
                 "real_group_mse": float(real_group_summary["mse"]),
+                "real_group_mse_se": float(real_group_summary["mse_se"]),
                 "real_group_bias": float(real_group_summary["bias"]),
+                "real_group_bias_se": float(real_group_summary["bias_se"]),
                 "real_group_var": float(real_group_summary["var"]),
+
                 "synthetic_internal_rmse": float(summary_internal["rmse"]),
                 "synthetic_internal_mse": float(summary_internal["mse"]),
+                "synthetic_internal_mse_se": float(summary_internal["mse_se"]),
                 "synthetic_internal_bias": float(summary_internal["bias"]),
+                "synthetic_internal_bias_se": float(summary_internal["bias_se"]),
                 "synthetic_internal_var": float(summary_internal["var"]),
+
                 "synthetic_vs_real_rmse": float(summary_vs_real["rmse"]),
                 "synthetic_vs_real_mse": float(summary_vs_real["mse"]),
+                "synthetic_vs_real_mse_se": float(summary_vs_real["mse_se"]),
                 "synthetic_vs_real_bias": float(summary_vs_real["bias"]),
+                "synthetic_vs_real_bias_se": float(summary_vs_real["bias_se"]),
                 "synthetic_vs_real_var": float(summary_vs_real["var"]),
+
                 "abs_gap_rmse_real_vs_syn_internal": float(abs(real_group_summary["rmse"] - summary_internal["rmse"])),
                 "abs_gap_rmse_real_vs_syn_real": float(abs(real_group_summary["rmse"] - summary_vs_real["rmse"])),
                 "abs_gap_mse_real_vs_syn_internal": float(abs(real_group_summary["mse"] - summary_internal["mse"])),
@@ -250,38 +343,20 @@ def main():
                 "comparison_to_real_group": comparison,
             }
 
-            summary_rows.append(
-                {
-                    "source": source_name,
-                    "estimator": est_name,
-                    "synthetic_reference_truth": float(syn_ref_truths[est_name]),
-                    "real_truth": float(real_ate_true),
+            row = {
+                "source": source_name,
+                "estimator": est_name,
+                "synthetic_reference_truth": float(syn_reference_truth),
+                "synthetic_reference_estimator": SYNTHETIC_REFERENCE_ESTIMATOR,
+                "synthetic_reference_type": "common_reference_estimator",
+                "real_truth": float(real_ate_true),
+            }
+            row.update(add_summary_fields("real_group", real_group_summary))
+            row.update(add_summary_fields("synthetic_internal", summary_internal))
+            row.update(add_summary_fields("synthetic_vs_real", summary_vs_real))
+            row.update(comparison)
 
-                    "real_group_bias": float(real_group_summary["bias"]),
-                    "real_group_var": float(real_group_summary["var"]),
-                    "real_group_mse": float(real_group_summary["mse"]),
-                    "real_group_rmse": float(real_group_summary["rmse"]),
-
-                    "synthetic_internal_bias": float(summary_internal["bias"]),
-                    "synthetic_internal_var": float(summary_internal["var"]),
-                    "synthetic_internal_mse": float(summary_internal["mse"]),
-                    "synthetic_internal_rmse": float(summary_internal["rmse"]),
-
-                    "synthetic_vs_real_bias": float(summary_vs_real["bias"]),
-                    "synthetic_vs_real_var": float(summary_vs_real["var"]),
-                    "synthetic_vs_real_mse": float(summary_vs_real["mse"]),
-                    "synthetic_vs_real_rmse": float(summary_vs_real["rmse"]),
-
-                    "abs_gap_rmse_real_vs_syn_internal": float(abs(real_group_summary["rmse"] - summary_internal["rmse"])),
-                    "abs_gap_rmse_real_vs_syn_real": float(abs(real_group_summary["rmse"] - summary_vs_real["rmse"])),
-                    "abs_gap_mse_real_vs_syn_internal": float(abs(real_group_summary["mse"] - summary_internal["mse"])),
-                    "abs_gap_mse_real_vs_syn_real": float(abs(real_group_summary["mse"] - summary_vs_real["mse"])),
-                    "abs_gap_bias_real_vs_syn_internal": float(abs(real_group_summary["bias"] - summary_internal["bias"])),
-                    "abs_gap_bias_real_vs_syn_real": float(abs(real_group_summary["bias"] - summary_vs_real["bias"])),
-                    "abs_gap_var_real_vs_syn_internal": float(abs(real_group_summary["var"] - summary_internal["var"])),
-                    "abs_gap_var_real_vs_syn_real": float(abs(real_group_summary["var"] - summary_vs_real["var"])),
-                }
-            )
+            summary_rows.append(row)
 
     # ---------------------------------
     # 3) Winners by metric

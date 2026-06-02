@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 DISTANCE_COLS = ["W1", "W2", "W3", "W4", "W5", "W6", "A", "Y"]
+SEEDS = [1, 2, 3, 4, 5]
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 RESULTS_DIR = SCRIPT_DIR / "results"
@@ -48,29 +49,28 @@ PLOT_LABELS = {
 }
 
 
-def compute_dcr(seed_path: Path, syn_path: Path, test_path: Path):
-    """
-    Compute Distance to Closest Record (DCR) for a synthetic dataset relative
-    to the seed dataset, using the full record:
-        W1-W6, A, Y
+def validate_columns(df: pd.DataFrame, name: str):
+    missing = [c for c in DISTANCE_COLS if c not in df.columns]
+    if missing:
+        raise ValueError(f"Missing columns in {name}: {missing}")
 
-    Standardization uses seed stats. Synthetic rows are subsampled to match
-    test set size.
-    """
+
+def min_distances(query_array, reference_array):
+    out = []
+    for row in query_array:
+        dists = np.sqrt(((reference_array - row) ** 2).sum(axis=1))
+        out.append(float(dists.min()))
+    return out
+
+
+def load_and_standardize(seed_path: Path, syn_path: Path, test_path: Path):
     seed = pd.read_csv(seed_path)
     syn = pd.read_csv(syn_path)
     test = pd.read_csv(test_path)
 
-    missing_seed = [c for c in DISTANCE_COLS if c not in seed.columns]
-    missing_syn = [c for c in DISTANCE_COLS if c not in syn.columns]
-    missing_test = [c for c in DISTANCE_COLS if c not in test.columns]
-
-    if missing_seed:
-        raise ValueError(f"Missing columns in seed data: {missing_seed}")
-    if missing_syn:
-        raise ValueError(f"Missing columns in synthetic data: {missing_syn}")
-    if missing_test:
-        raise ValueError(f"Missing columns in test data: {missing_test}")
+    validate_columns(seed, "seed data")
+    validate_columns(syn, "synthetic data")
+    validate_columns(test, "test data")
 
     means = seed[DISTANCE_COLS].mean()
     stds = seed[DISTANCE_COLS].std().replace(0, 1.0)
@@ -83,20 +83,26 @@ def compute_dcr(seed_path: Path, syn_path: Path, test_path: Path):
     syn_std[DISTANCE_COLS] = (syn_std[DISTANCE_COLS] - means) / stds
     test_std[DISTANCE_COLS] = (test_std[DISTANCE_COLS] - means) / stds
 
+    return seed_std, syn_std, test_std
+
+
+def compute_dcr(seed_path: Path, syn_path: Path, test_path: Path, sample_seed=None):
+    """
+    Compute Distance to Closest Record (DCR) for a synthetic dataset relative
+    to the seed dataset, using W1-W6, A, Y.
+
+    Standardization uses seed stats. Synthetic rows are subsampled to match
+    test set size. If sample_seed is provided, it controls this subsampling.
+    """
+    seed_std, syn_std, test_std = load_and_standardize(seed_path, syn_path, test_path)
+
     n_test = test_std.shape[0]
     if syn_std.shape[0] > n_test:
-        syn_std = syn_std.sample(n=n_test, random_state=42)
+        syn_std = syn_std.sample(n=n_test, random_state=sample_seed)
 
     seed_array = seed_std[DISTANCE_COLS].to_numpy(dtype=float)
     syn_array = syn_std[DISTANCE_COLS].to_numpy(dtype=float)
     test_array = test_std[DISTANCE_COLS].to_numpy(dtype=float)
-
-    def min_distances(query_array, reference_array):
-        out = []
-        for row in query_array:
-            dists = np.sqrt(((reference_array - row) ** 2).sum(axis=1))
-            out.append(float(dists.min()))
-        return out
 
     syn_dcr = min_distances(syn_array, seed_array)
     test_dcr = min_distances(test_array, seed_array)
@@ -104,11 +110,41 @@ def compute_dcr(seed_path: Path, syn_path: Path, test_path: Path):
     return syn_dcr, test_dcr
 
 
+def compute_dcr_repeated(seed_path: Path, syn_path: Path, test_path: Path):
+    """
+    Recompute synthetic DCR over multiple subsampling seeds.
+    Returns:
+      - all_dcr_values: flattened DCR values across repeated subsamples
+      - mean_by_seed: mean DCR for each subsampling seed
+      - first_values: DCR values from the first seed, useful for boxplot display
+    """
+    all_dcr_values = []
+    mean_by_seed = []
+    first_values = None
+
+    for seed in SEEDS:
+        syn_dcr, _ = compute_dcr(
+            seed_path=seed_path,
+            syn_path=syn_path,
+            test_path=test_path,
+            sample_seed=seed,
+        )
+        syn_dcr = list(map(float, syn_dcr))
+
+        if first_values is None:
+            first_values = syn_dcr
+
+        all_dcr_values.extend(syn_dcr)
+        mean_by_seed.append(float(np.mean(syn_dcr)))
+
+    return all_dcr_values, mean_by_seed, first_values
+
+
 def summarize(values):
     arr = np.asarray(values, dtype=float)
     return {
         "mean": float(np.mean(arr)),
-        "std": float(np.std(arr)),
+        "std": float(np.std(arr, ddof=1)) if len(arr) > 1 else 0.0,
         "median": float(np.median(arr)),
         "min": float(np.min(arr)),
         "max": float(np.max(arr)),
@@ -116,21 +152,39 @@ def summarize(values):
     }
 
 
-def round_summary(summary, digits=6):
+def summarize_repeated_means(mean_by_seed):
+    arr = np.asarray(mean_by_seed, dtype=float)
+    mean = float(np.mean(arr))
+    std = float(np.std(arr, ddof=1)) if len(arr) > 1 else 0.0
+    se = float(std / np.sqrt(len(arr))) if len(arr) > 1 else 0.0
+
     return {
-        "mean": round(summary["mean"], digits),
-        "std": round(summary["std"], digits),
-        "median": round(summary["median"], digits),
-        "min": round(summary["min"], digits),
-        "max": round(summary["max"], digits),
-        "n": summary["n"],
+        "mean": mean,
+        "std": std,
+        "se": se,
+        "ci95_low": float(mean - 1.96 * se),
+        "ci95_high": float(mean + 1.96 * se),
+        "n_reps": int(len(arr)),
+        "seeds": SEEDS,
+        "values": arr.tolist(),
     }
+
+
+def round_nested(obj, digits=6):
+    if isinstance(obj, dict):
+        return {k: round_nested(v, digits) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [round_nested(v, digits) for v in obj]
+    if isinstance(obj, float):
+        return round(obj, digits)
+    return obj
 
 
 def main():
     print(f"Using DATA_DIR    = {DATA_DIR}")
     print(f"Saving results to = {RESULTS_DIR}")
     print(f"Using columns     = {DISTANCE_COLS}")
+    print(f"Using seeds       = {SEEDS}")
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -149,7 +203,8 @@ def main():
     if not first_syn.exists():
         raise FileNotFoundError(f"Missing synthetic file: {first_syn}")
 
-    _, test_dcr = compute_dcr(SEED_FILE, first_syn, TEST_FILE)
+    # Test DCR is deterministic with respect to the seed data.
+    _, test_dcr = compute_dcr(SEED_FILE, first_syn, TEST_FILE, sample_seed=SEEDS[0])
     test_summary = summarize(test_dcr)
 
     results["data_test"] = {
@@ -161,7 +216,7 @@ def main():
     aggregate["data_test"] = {
         "file": str(TEST_FILE),
         "distance_cols": DISTANCE_COLS,
-        "summary": round_summary(test_summary),
+        "summary": round_nested(test_summary),
     }
 
     plot_data.append(test_dcr)
@@ -187,28 +242,38 @@ def main():
         if not syn_path.exists():
             raise FileNotFoundError(f"Missing synthetic file for {name}: {syn_path}")
 
-        syn_dcr, _ = compute_dcr(SEED_FILE, syn_path, TEST_FILE)
-        syn_summary = summarize(syn_dcr)
+        all_dcr_values, mean_by_seed, first_values = compute_dcr_repeated(
+            SEED_FILE,
+            syn_path,
+            TEST_FILE,
+        )
+
+        record_summary = summarize(all_dcr_values)
+        repeated_summary = summarize_repeated_means(mean_by_seed)
 
         results[name] = {
             "file": str(syn_path),
             "distance_cols": DISTANCE_COLS,
-            "summary": syn_summary,
-            "dcr_values": syn_dcr,
+            "seeds": SEEDS,
+            "summary": record_summary,
+            "repeated_mean_summary": repeated_summary,
+            "dcr_values_first_seed": first_values,
+            "dcr_mean_by_seed": mean_by_seed,
         }
+
         aggregate[name] = {
             "file": str(syn_path),
             "distance_cols": DISTANCE_COLS,
-            "summary": round_summary(syn_summary),
+            "summary": round_nested(record_summary),
+            "repeated_mean_summary": round_nested(repeated_summary),
         }
 
-        plot_data.append(syn_dcr)
+        plot_data.append(first_values)
         plot_labels.append(PLOT_LABELS[name])
 
         print(
-            f"{name}: Mean DCR = {syn_summary['mean']:.4f}, "
-            f"Std DCR = {syn_summary['std']:.4f}, "
-            f"Median DCR = {syn_summary['median']:.4f}"
+            f"{name}: Mean DCR = {repeated_summary['mean']:.4f} ± {repeated_summary['se']:.4f}, "
+            f"Median DCR = {record_summary['median']:.4f}"
         )
 
     with open(OUTPUT_JSON, "w") as f:

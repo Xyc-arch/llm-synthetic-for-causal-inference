@@ -1,159 +1,253 @@
+#!/usr/bin/env python3
 import os
 import json
-import math
 import pandas as pd
 
 PROJECT_ROOT = "/home/ubuntu/syn_causal"
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "positivity", "results")
 
-FILES = {
-    "orig": os.path.join(RESULTS_DIR, "orig_estimators.json"),
-    "pair_qhyb": os.path.join(RESULTS_DIR, "pair_qhyb_results.json"),
-    "self_supervised": os.path.join(RESULTS_DIR, "self_supervised_pair_results.json"),
-    "pair_qhyb_flip": os.path.join(RESULTS_DIR, "pair_qhyb_flip_results.json"),
+INPUT_CSV = os.path.join(RESULTS_DIR, "all_results_by_n_mse_summary.csv")
+OUTPUT_JSON = os.path.join(RESULTS_DIR, "positivity_mse_by_n_table.json")
+
+ESTIMATORS = ["ipw", "aipw", "outcome_regression", "tmle"]
+
+ESTIMATOR_LABELS = {
+    "ipw": "IPW",
+    "aipw": "AIPW",
+    "outcome_regression": "OR",
+    "tmle": "TMLE",
 }
 
-ESTIMATOR_KEYS = ["aipw", "ipw", "outcome_regression", "tmle"]
+# Only include these scenarios in the JSON table.
+SCENARIO_ORDER = [
+    ("orig", None, None),
+
+    ("pair_qhyb", "gan", None),
+    ("pair_qhyb", "llm", None),
+
+    ("self_supervised", "gan", None),
+    ("self_supervised", "llm", None),
+
+    ("pair_qhyb_flip", "gan", "flip_5"),
+    ("pair_qhyb_flip", "llm", "flip_5"),
+
+    ("pair_qhyb_flip", "gan", "flip_10"),
+    ("pair_qhyb_flip", "llm", "flip_10"),
+]
 
 
-def load_json(path):
-    with open(path, "r") as f:
-        return json.load(f)
+def clean_value(x):
+    if pd.isna(x) or str(x).lower() == "nan":
+        return None
+    return str(x)
 
 
-def add_row(rows, experiment, dataset, estimator, bias, source=None, flip=None, file_name=None):
-    rows.append(
-        {
+def format_mse_pm_se(mse, se):
+    if pd.isna(mse):
+        return "--"
+
+    mse = float(mse)
+    se = 0.0 if pd.isna(se) else float(se)
+
+    return f"{mse:.4f} ± {se:.4f}"
+
+
+def scenario_label(experiment, source=None, flip=None):
+    source = clean_value(source)
+    flip = clean_value(flip)
+
+    source_label = {
+        "gan": "GAN",
+        "llm": "LLM",
+    }.get(source, source.upper() if source else "")
+
+    if experiment == "orig":
+        return "Original"
+
+    if experiment == "pair_qhyb":
+        return f"Pair Hybrid {source_label}"
+
+    if experiment == "self_supervised":
+        return f"Pair Self-Supervised {source_label}"
+
+    if experiment == "pair_qhyb_flip":
+        flip_label = {
+            "flip_5": "5%",
+            "flip_10": "10%",
+            "flip_20": "20%",
+        }.get(flip, flip.replace("_", " ") if flip else "")
+
+        return f"Pair Hybrid Flip {flip_label} {source_label}"
+
+    return experiment
+
+
+def scenario_json_key(experiment, source=None, flip=None):
+    source = clean_value(source)
+    flip = clean_value(flip)
+
+    parts = [experiment]
+
+    if source is not None:
+        parts.append(source)
+
+    if flip is not None:
+        parts.append(flip)
+
+    return "_".join(parts)
+
+
+def match_rows(df, sample_size, experiment, source, flip, estimator):
+    source = clean_value(source)
+    flip = clean_value(flip)
+
+    mask = (
+        (df["sample_size"].astype(int) == int(sample_size))
+        & (df["experiment"].astype(str) == str(experiment))
+        & (df["estimator"].astype(str) == str(estimator))
+    )
+
+    if source is None:
+        mask = mask & df["source"].isna()
+    else:
+        mask = mask & (df["source"].astype(str) == str(source))
+
+    if flip is None:
+        mask = mask & df["flip"].isna()
+    else:
+        mask = mask & (df["flip"].astype(str) == str(flip))
+
+    return df[mask]
+
+
+def build_json_for_n(df, sample_size):
+    rows = []
+
+    for experiment, source, flip in SCENARIO_ORDER:
+        label = scenario_label(experiment, source, flip)
+        key = scenario_json_key(experiment, source, flip)
+
+        row = {
+            "key": key,
+            "label": label,
             "experiment": experiment,
-            "dataset": dataset,
-            "source": source,
-            "flip": flip,
-            "estimator": estimator,
-            "bias": float(bias),
-            "bias_sq": float(bias) ** 2,
-            "file_name": file_name,
+            "source": clean_value(source),
+            "flip": clean_value(flip),
+            "estimators": {},
         }
-    )
 
-
-def parse_orig(payload, file_name):
-    rows = []
-    for dataset, dataset_obj in payload["datasets"].items():
-        estimators = dataset_obj["estimators"]
-        for est in ESTIMATOR_KEYS:
-            add_row(
-                rows=rows,
-                experiment="orig",
-                dataset=dataset,
+        for est in ESTIMATORS:
+            match = match_rows(
+                df=df,
+                sample_size=sample_size,
+                experiment=experiment,
+                source=source,
+                flip=flip,
                 estimator=est,
-                bias=estimators[est]["bias"],
-                source=None,
-                flip=None,
-                file_name=file_name,
             )
-    return rows
 
+            est_label = ESTIMATOR_LABELS[est]
 
-def parse_pair(payload, experiment_name, file_name):
-    rows = []
-    for dataset, dataset_obj in payload["datasets"].items():
-        for source, source_obj in dataset_obj.items():
-            estimators = source_obj["estimators"]
-            for est in ESTIMATOR_KEYS:
-                add_row(
-                    rows=rows,
-                    experiment=experiment_name,
-                    dataset=dataset,
-                    estimator=est,
-                    bias=estimators[est]["bias"],
-                    source=source,
-                    flip=None,
-                    file_name=file_name,
-                )
-    return rows
+            if len(match) == 0:
+                row["estimators"][est] = {
+                    "label": est_label,
+                    "mse": None,
+                    "mse_se": None,
+                    "formatted": "--",
+                }
+                continue
 
+            m = match.iloc[0]
 
-def parse_pair_flip(payload, file_name):
-    rows = []
-    for dataset, dataset_obj in payload["datasets"].items():
-        for source, source_obj in dataset_obj.items():
-            for flip_tag, flip_obj in source_obj.items():
-                estimators = flip_obj["estimators"]
-                for est in ESTIMATOR_KEYS:
-                    add_row(
-                        rows=rows,
-                        experiment="pair_qhyb_flip",
-                        dataset=dataset,
-                        estimator=est,
-                        bias=estimators[est]["bias"],
-                        source=source,
-                        flip=flip_tag,
-                        file_name=file_name,
-                    )
-    return rows
+            row["estimators"][est] = {
+                "label": est_label,
+                "mse": round(float(m["mse"]), 6),
+                "mse_se": round(float(m["mse_se"]), 6),
+                "formatted": format_mse_pm_se(m["mse"], m["mse_se"]),
+            }
 
+            optional_cols = [
+                "mean_estimate",
+                "se_estimate",
+                "mean_bias",
+                "se_bias",
+                "mean_abs_bias",
+                "se_abs_bias",
+                "rmse",
+                "n_reps",
+                "ate_true",
+            ]
 
-def collect_all_rows():
-    rows = []
+            for col in optional_cols:
+                if col in m and not pd.isna(m[col]):
+                    if col == "n_reps":
+                        row["estimators"][est][col] = int(m[col])
+                    else:
+                        row["estimators"][est][col] = round(float(m[col]), 6)
 
-    if os.path.exists(FILES["orig"]):
-        payload = load_json(FILES["orig"])
-        rows.extend(parse_orig(payload, os.path.basename(FILES["orig"])))
+        rows.append(row)
 
-    if os.path.exists(FILES["pair_qhyb"]):
-        payload = load_json(FILES["pair_qhyb"])
-        rows.extend(parse_pair(payload, "pair_qhyb", os.path.basename(FILES["pair_qhyb"])))
-
-    if os.path.exists(FILES["self_supervised"]):
-        payload = load_json(FILES["self_supervised"])
-        rows.extend(parse_pair(payload, "self_supervised", os.path.basename(FILES["self_supervised"])))
-
-    if os.path.exists(FILES["pair_qhyb_flip"]):
-        payload = load_json(FILES["pair_qhyb_flip"])
-        rows.extend(parse_pair_flip(payload, os.path.basename(FILES["pair_qhyb_flip"])))
-
-    return pd.DataFrame(rows)
-
-
-def summarize_mse(df):
-    summary = (
-        df.groupby(["experiment", "source", "flip", "estimator"], dropna=False)
-        .agg(
-            n_seeds=("dataset", "nunique"),
-            mse=("bias_sq", "mean"),
-            rmse=("bias_sq", lambda x: math.sqrt(float(x.mean()))),
-            mean_bias=("bias", "mean"),
-            mean_abs_bias=("bias", lambda x: float(x.abs().mean())),
-        )
-        .reset_index()
-        .sort_values(["experiment", "source", "flip", "estimator"], na_position="first")
-        .reset_index(drop=True)
-    )
-    return summary
+    return {
+        "sample_size": int(sample_size),
+        "columns": [
+            {"key": est, "label": ESTIMATOR_LABELS[est]}
+            for est in ESTIMATORS
+        ],
+        "rows": rows,
+    }
 
 
 def main():
-    df = collect_all_rows()
+    if not os.path.exists(INPUT_CSV):
+        raise FileNotFoundError(
+            f"Missing input CSV: {INPUT_CSV}\n"
+            "Run collect.py first to create all_results_by_n_mse_summary.csv."
+        )
 
-    if df.empty:
-        raise ValueError("No rows collected. Check file paths and JSON structure.")
+    df = pd.read_csv(INPUT_CSV)
 
-    # sanity check
-    print("Collected rows:", len(df))
-    print(df.head(20).to_string(index=False))
+    required = {
+        "sample_size",
+        "experiment",
+        "source",
+        "flip",
+        "estimator",
+        "mse",
+        "mse_se",
+    }
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns in {INPUT_CSV}: {sorted(missing)}")
 
-    summary = summarize_mse(df)
+    # Normalize missing values for source and flip.
+    df["source"] = df["source"].where(~df["source"].isna(), None)
+    df["flip"] = df["flip"].where(~df["flip"].isna(), None)
 
-    long_csv = os.path.join(RESULTS_DIR, "all_results_long_bias_sq.csv")
-    summary_csv = os.path.join(RESULTS_DIR, "all_results_mse_summary.csv")
+    sample_sizes = sorted(df["sample_size"].dropna().astype(int).unique().tolist())
 
-    df.to_csv(long_csv, index=False)
-    summary.to_csv(summary_csv, index=False)
+    output = {
+        "input_csv": INPUT_CSV,
+        "sample_sizes": sample_sizes,
+        "estimators": ESTIMATOR_LABELS,
+        "scenario_order": [
+            {
+                "experiment": exp,
+                "source": clean_value(src),
+                "flip": clean_value(flip),
+                "label": scenario_label(exp, src, flip),
+            }
+            for exp, src, flip in SCENARIO_ORDER
+        ],
+        "tables": {
+            f"n{n}": build_json_for_n(df, n)
+            for n in sample_sizes
+        },
+    }
 
-    print("\nSaved long table to:", long_csv)
-    print("Saved summary to:", summary_csv)
-    print("\nSummary:")
-    print(summary.to_string(index=False))
+    with open(OUTPUT_JSON, "w") as f:
+        json.dump(output, f, indent=2)
+
+    print(f"Saved JSON table data to: {OUTPUT_JSON}")
 
 
 if __name__ == "__main__":

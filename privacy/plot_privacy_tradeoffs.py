@@ -4,6 +4,8 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import MaxNLocator, ScalarFormatter
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 RESULTS_DIR = SCRIPT_DIR / "results"
@@ -14,7 +16,8 @@ DCR_FILE = RESULTS_DIR / "dcr_aggregate.json"
 ATE_FILE = RESULTS_DIR / "privacy_estimators_compact.json"
 
 OUT_TSTR_DCR = PLOT_DIR / "privacy_tstr_dcr_compact.png"
-OUT_ATE_MSE = PLOT_DIR / "privacy_ate_mse_faceted_zoom.png"
+OUT_ATE_MSE = PLOT_DIR / "privacy_ate_mse_llm_gan_panels.png"
+
 
 DATASETS = [
     "llm_syn_clean",
@@ -31,6 +34,7 @@ DISPLAY_LABELS = {
 }
 
 ESTIMATORS = ["ipw", "aipw", "outcome_regression", "tmle"]
+
 ESTIMATOR_LABELS = {
     "ipw": "IPW",
     "aipw": "AIPW",
@@ -45,6 +49,18 @@ BAR_COLORS = {
     "gan_syn_hybrid": "#e6550d",
 }
 
+GENERATOR_PANELS = {
+    "LLM": ["llm_syn_clean", "llm_syn_hybrid"],
+    "GAN": ["gan_syn_clean", "gan_syn_hybrid"],
+}
+
+PAIR_LABELS = {
+    "llm_syn_clean": "Clean",
+    "llm_syn_hybrid": "Hybrid",
+    "gan_syn_clean": "Clean",
+    "gan_syn_hybrid": "Hybrid",
+}
+
 
 def load_json(path: Path):
     if not path.exists():
@@ -53,19 +69,58 @@ def load_json(path: Path):
         return json.load(f)
 
 
+def get_dcr_mean_and_se(dcr, ds):
+    """
+    New run_dcr.py stores repeated synthetic-row subsampling uncertainty in:
+        repeated_mean_summary: {mean, se, ...}
+
+    Fallback supports the older dcr_aggregate.json format:
+        summary: {mean, ...}
+    """
+    if "repeated_mean_summary" in dcr[ds]:
+        return (
+            float(dcr[ds]["repeated_mean_summary"]["mean"]),
+            float(dcr[ds]["repeated_mean_summary"].get("se", 0.0)),
+        )
+
+    return float(dcr[ds]["summary"]["mean"]), 0.0
+
+
 def build_metrics():
     tstr = load_json(TSTR_FILE)
     dcr = load_json(DCR_FILE)
     ate = load_json(ATE_FILE)
 
     metrics = {}
+
     for ds in DATASETS:
+        dcr_mean, dcr_se = get_dcr_mean_and_se(dcr, ds)
+
         metrics[ds] = {
             "label": DISPLAY_LABELS[ds],
-            "tstr_auc": float(tstr[ds]["auc"]),
-            "dcr_mean": float(dcr[ds]["summary"]["mean"]),
-            "ate_mse": {est: float(ate["datasets"][ds][est]["mse"]) for est in ESTIMATORS},
+
+            # TSTR AUC:
+            # New tstr.json stores mean/se; fallback to old "auc" format if needed.
+            "tstr_auc": float(tstr[ds].get("mean", tstr[ds]["auc"])),
+            "tstr_auc_se": float(tstr[ds].get("se", 0.0)),
+
+            # DCR:
+            # New dcr_aggregate.json stores mean/se over synthetic-row subsampling seeds.
+            "dcr_mean": dcr_mean,
+            "dcr_mean_se": dcr_se,
+
+            # Causal fidelity:
+            # ATE MSE and SE over evaluation/subsampling seeds.
+            "ate_mse": {
+                est: float(ate["datasets"][ds][est]["mse"])
+                for est in ESTIMATORS
+            },
+            "ate_mse_se": {
+                est: float(ate["datasets"][ds][est].get("mse_se", 0.0))
+                for est in ESTIMATORS
+            },
         }
+
     return metrics
 
 
@@ -76,13 +131,28 @@ def style_axis(ax):
     ax.spines["right"].set_visible(False)
 
 
-def add_labels(ax, bars, fmt="{:.3f}", fontsize=8):
+def style_y_ticks(ax, nbins=6):
+    """
+    Make y-axis ticks readable and non-confusing.
+    Avoid scientific notation unless values are extremely small/large.
+    """
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=nbins, min_n_ticks=4))
+
+    formatter = ScalarFormatter(useMathText=False)
+    formatter.set_scientific(False)
+    formatter.set_useOffset(False)
+    ax.yaxis.set_major_formatter(formatter)
+
+    ax.tick_params(axis="y", labelsize=9)
+
+
+def add_labels(ax, bars, fmt="{:.3f}", fontsize=8, y_offset=3):
     for b in bars:
         h = b.get_height()
         ax.annotate(
             fmt.format(h),
             (b.get_x() + b.get_width() / 2, h),
-            xytext=(0, 3),
+            xytext=(0, y_offset),
             textcoords="offset points",
             ha="center",
             va="bottom",
@@ -92,82 +162,150 @@ def add_labels(ax, bars, fmt="{:.3f}", fontsize=8):
 
 def plot_tstr_and_dcr(metrics):
     labels = [metrics[d]["label"] for d in DATASETS]
+
     tstr_vals = [metrics[d]["tstr_auc"] for d in DATASETS]
+    tstr_errs = [metrics[d]["tstr_auc_se"] for d in DATASETS]
+
     dcr_vals = [metrics[d]["dcr_mean"] for d in DATASETS]
+    dcr_errs = [metrics[d]["dcr_mean_se"] for d in DATASETS]
+
     colors = [BAR_COLORS[d] for d in DATASETS]
     x = np.arange(len(DATASETS))
 
     fig, axes = plt.subplots(1, 2, figsize=(10, 3.8), constrained_layout=True)
 
-    bars1 = axes[0].bar(x, tstr_vals, color=colors, width=0.68)
+    bars1 = axes[0].bar(
+        x,
+        tstr_vals,
+        yerr=tstr_errs,
+        capsize=3,
+        color=colors,
+        width=0.68,
+    )
     axes[0].set_xticks(x)
     axes[0].set_xticklabels(labels)
     axes[0].set_ylabel("TSTR AUC")
     axes[0].set_title("Predictive Utility")
     style_axis(axes[0])
-    add_labels(axes[0], bars1, fmt="{:.3f}")
+    style_y_ticks(axes[0])
+    add_labels(axes[0], bars1, fmt="{:.3f}", fontsize=8)
 
-    bars2 = axes[1].bar(x, dcr_vals, color=colors, width=0.68)
+    bars2 = axes[1].bar(
+        x,
+        dcr_vals,
+        yerr=dcr_errs,
+        capsize=3,
+        color=colors,
+        width=0.68,
+    )
     axes[1].set_xticks(x)
     axes[1].set_xticklabels(labels)
     axes[1].set_ylabel("Mean DCR")
     axes[1].set_title("Privacy Distance")
     style_axis(axes[1])
-    add_labels(axes[1], bars2, fmt="{:.3f}")
+    style_y_ticks(axes[1])
+    add_labels(axes[1], bars2, fmt="{:.3f}", fontsize=8)
 
     fig.savefig(OUT_TSTR_DCR, dpi=250, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved {OUT_TSTR_DCR}")
 
 
-def plot_ate_mse_faceted(metrics):
-    labels = [metrics[d]["label"] for d in DATASETS]
-    colors = [BAR_COLORS[d] for d in DATASETS]
-    x = np.arange(len(DATASETS))
+def nice_upper_limit(values):
+    """
+    Choose a readable upper y-limit with some headroom.
+    """
+    max_v = max(values) if values else 0.0
 
-    y_cap = 0.02
+    if max_v <= 0:
+        return 1.0
 
-    fig, axes = plt.subplots(1, 4, figsize=(13, 3.6), sharey=True, constrained_layout=True)
+    upper = max_v * 1.18
 
-    for ax, est in zip(axes, ESTIMATORS):
-        raw_vals = [metrics[d]["ate_mse"][est] for d in DATASETS]
-        plot_vals = [min(v, y_cap) for v in raw_vals]
+    if upper < 0.01:
+        return round(upper + 0.002, 3)
+    if upper < 0.05:
+        return round(upper + 0.005, 3)
+    if upper < 0.1:
+        return round(upper + 0.01, 2)
+    if upper < 0.5:
+        return round(upper + 0.05, 2)
 
-        bars = ax.bar(x, plot_vals, color=colors, width=0.68)
+    return round(upper + 0.1, 1)
 
+
+def plot_ate_mse_llm_gan_panels(metrics):
+    """
+    ATE MSE plot with separate panels for LLM and GAN.
+
+    Each panel has:
+        x-axis: estimator
+        bars: Clean vs Hybrid
+        y-axis: ATE MSE
+
+    This avoids mixing LLM and GAN in the same crowded estimator panel
+    and makes the y-axis ticks easier to read.
+    """
+    x = np.arange(len(ESTIMATORS))
+    width = 0.36
+
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(11, 4.2),
+        sharey=False,
+        constrained_layout=True,
+    )
+
+    for ax, (gen_name, ds_pair) in zip(axes, GENERATOR_PANELS.items()):
+        clean_ds, hybrid_ds = ds_pair
+
+        clean_vals = [metrics[clean_ds]["ate_mse"][est] for est in ESTIMATORS]
+        hybrid_vals = [metrics[hybrid_ds]["ate_mse"][est] for est in ESTIMATORS]
+
+        clean_errs = [metrics[clean_ds]["ate_mse_se"][est] for est in ESTIMATORS]
+        hybrid_errs = [metrics[hybrid_ds]["ate_mse_se"][est] for est in ESTIMATORS]
+
+        bars_clean = ax.bar(
+            x - width / 2,
+            clean_vals,
+            width,
+            yerr=clean_errs,
+            capsize=3,
+            label="Clean",
+            color=BAR_COLORS[clean_ds],
+        )
+
+        bars_hybrid = ax.bar(
+            x + width / 2,
+            hybrid_vals,
+            width,
+            yerr=hybrid_errs,
+            capsize=3,
+            label="Hybrid",
+            color=BAR_COLORS[hybrid_ds],
+        )
+
+        ax.set_title(f"{gen_name}: ATE MSE", fontsize=12)
         ax.set_xticks(x)
-        ax.set_xticklabels(labels, fontsize=9)
-        ax.set_title(ESTIMATOR_LABELS[est], fontsize=11)
-        ax.set_ylim(0, y_cap)
+        ax.set_xticklabels([ESTIMATOR_LABELS[e] for e in ESTIMATORS], fontsize=10)
+        ax.set_ylabel("ATE MSE")
+        ax.legend(frameon=False, fontsize=9)
+
+        all_vals_with_errs = [
+            v + e for v, e in zip(clean_vals, clean_errs)
+        ] + [
+            v + e for v, e in zip(hybrid_vals, hybrid_errs)
+        ]
+        ax.set_ylim(0, nice_upper_limit(all_vals_with_errs))
+
         style_axis(ax)
+        style_y_ticks(ax, nbins=6)
 
-        for bar, raw_v, plot_v in zip(bars, raw_vals, plot_vals):
-            x_center = bar.get_x() + bar.get_width() / 2
+        add_labels(ax, bars_clean, fmt="{:.3f}", fontsize=7, y_offset=3)
+        add_labels(ax, bars_hybrid, fmt="{:.3f}", fontsize=7, y_offset=3)
 
-            if raw_v > y_cap:
-                ax.annotate(
-                    f">{y_cap:.2f}",
-                    (x_center, y_cap),
-                    xytext=(0, -16),
-                    textcoords="offset points",
-                    ha="center",
-                    va="top",
-                    fontsize=8,
-                    fontweight="bold",
-                )
-            else:
-                ax.annotate(
-                    f"{raw_v:.3f}",
-                    (x_center, plot_v),
-                    xytext=(0, 3),
-                    textcoords="offset points",
-                    ha="center",
-                    va="bottom",
-                    fontsize=7,
-                )
-
-    axes[0].set_ylabel("ATE MSE")
-    # fig.suptitle("Causal Fidelity: ATE MSE", fontsize=13, y=1.03)
+    fig.suptitle("Causal Fidelity: ATE MSE by Generator", fontsize=13)
 
     fig.savefig(OUT_ATE_MSE, dpi=250, bbox_inches="tight")
     plt.close(fig)
@@ -176,9 +314,11 @@ def plot_ate_mse_faceted(metrics):
 
 def main():
     PLOT_DIR.mkdir(parents=True, exist_ok=True)
+
     metrics = build_metrics()
+
     plot_tstr_and_dcr(metrics)
-    plot_ate_mse_faceted(metrics)
+    plot_ate_mse_llm_gan_panels(metrics)
 
 
 if __name__ == "__main__":

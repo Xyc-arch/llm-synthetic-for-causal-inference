@@ -2,6 +2,8 @@ import os
 import json
 from collections import OrderedDict
 
+import numpy as np
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 INPUT_PATH = os.path.join(PROJECT_ROOT, "privacy", "results", "privacy_estimators.json")
@@ -13,9 +15,50 @@ def load_results(path):
         return json.load(f)
 
 
+def summarize_from_estimates(estimates, ate_true):
+    estimates = np.array(estimates, dtype=float)
+    errors = estimates - ate_true
+    sq_errors = errors ** 2
+
+    n = len(estimates)
+
+    mean = float(np.mean(estimates))
+    std = float(np.std(estimates, ddof=1))
+    se = float(std / np.sqrt(n))
+
+    bias = float(mean - ate_true)
+    abs_bias = float(abs(bias))
+
+    mse = float(np.mean(sq_errors))
+    mse_std = float(np.std(sq_errors, ddof=1))
+    mse_se = float(mse_std / np.sqrt(n))
+    rmse = float(np.sqrt(mse))
+
+    return OrderedDict([
+        ("mean", round(mean, 6)),
+        ("std", round(std, 6)),
+        ("se", round(se, 6)),
+        ("ci95_low", round(mean - 1.96 * se, 6)),
+        ("ci95_high", round(mean + 1.96 * se, 6)),
+
+        ("bias", round(bias, 6)),
+        ("abs_bias", round(abs_bias, 6)),
+
+        ("mse", round(mse, 6)),
+        ("mse_std", round(mse_std, 6)),
+        ("mse_se", round(mse_se, 6)),
+        ("mse_ci95_low", round(mse - 1.96 * mse_se, 6)),
+        ("mse_ci95_high", round(mse + 1.96 * mse_se, 6)),
+
+        ("rmse", round(rmse, 6)),
+    ])
+
+
 def build_compact(results):
     compact = OrderedDict()
-    compact["ate_true"] = results["truth"]["ate_true"]
+    ate_true = float(results["truth"]["ate_true"])
+
+    compact["ate_true"] = ate_true
     compact["subsample_n"] = results["subsample_n"]
     compact["seeds"] = results["seeds"]
     compact["datasets"] = OrderedDict()
@@ -23,14 +66,10 @@ def build_compact(results):
     for dataset_name, dataset_results in results["datasets"].items():
         compact["datasets"][dataset_name] = OrderedDict()
         for est_name, metrics in dataset_results.items():
-            compact["datasets"][dataset_name][est_name] = OrderedDict([
-                ("mean", round(metrics["mean"], 6)),
-                ("bias", round(metrics["bias"], 6)),
-                ("abs_bias", round(metrics["abs_bias"], 6)),
-                ("std", round(metrics["std"], 6)),
-                ("mse", round(metrics["mse"], 6)),
-                ("rmse", round(metrics["rmse"], 6)),
-            ])
+            compact["datasets"][dataset_name][est_name] = summarize_from_estimates(
+                estimates=metrics["estimates"],
+                ate_true=ate_true,
+            )
 
     return compact
 

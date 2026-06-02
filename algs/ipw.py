@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+
+from algs.lrnr import make_g_learner, predict_binary_prob
 
 
 def _load_data(file_path: str) -> pd.DataFrame:
@@ -14,18 +15,44 @@ def estimate_ipw_df(
     treatment_col: str = "A",
     random_state: int = 42,
     clip_min: float = 1e-6,
+    g_learner: str = "rf",
+    outcome_type: str = "binary",
 ) -> float:
+    """
+    Stabilized/Hajek IPW estimator for ATE.
+
+    Supports:
+      - binary outcome
+      - continuous outcome
+
+    Treatment A is assumed binary.
+    """
     data = data.copy()
-    data[outcome_col] = data[outcome_col].round().astype(int)
+    covariates = list(covariates)
+
+    for c in covariates:
+        data[c] = pd.to_numeric(data[c], errors="coerce")
+
+    data[treatment_col] = pd.to_numeric(data[treatment_col], errors="coerce")
+    data[outcome_col] = pd.to_numeric(data[outcome_col], errors="coerce")
+
+    data = data.dropna(subset=covariates + [treatment_col, outcome_col]).copy()
+
     data[treatment_col] = data[treatment_col].round().astype(int)
 
-    rf_ps = RandomForestClassifier(random_state=random_state)
-    rf_ps.fit(data[covariates], data[treatment_col])
-    ps = np.clip(
-        rf_ps.predict_proba(data[covariates])[:, 1],
-        clip_min,
-        1 - clip_min,
-    )
+    if outcome_type == "binary":
+        data[outcome_col] = data[outcome_col].round().astype(int)
+    elif outcome_type == "continuous":
+        data[outcome_col] = data[outcome_col].astype(float)
+    else:
+        raise ValueError(f"Unknown outcome_type: {outcome_type}")
+
+    # g(W) = P(A=1 | W)
+    g_model = make_g_learner(g_learner, random_state=random_state)
+    g_model.fit(data[covariates], data[treatment_col])
+
+    ps = predict_binary_prob(g_model, data[covariates])
+    ps = np.clip(ps, clip_min, 1.0 - clip_min)
 
     A = data[treatment_col].to_numpy()
     Y = data[outcome_col].to_numpy()
@@ -46,9 +73,12 @@ def estimate_ipw(
     treatment_col: str = "A",
     random_state: int = 42,
     clip_min: float = 1e-6,
+    g_learner: str = "rf",
+    outcome_type: str = "binary",
     verbose: bool = True,
 ) -> float:
     data = _load_data(file_path)
+
     est = estimate_ipw_df(
         data=data,
         covariates=covariates,
@@ -56,7 +86,11 @@ def estimate_ipw(
         treatment_col=treatment_col,
         random_state=random_state,
         clip_min=clip_min,
+        g_learner=g_learner,
+        outcome_type=outcome_type,
     )
+
     if verbose:
         print(f"{file_path}: IPW ATE = {est}")
+
     return est

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import sys
 import json
@@ -17,16 +18,15 @@ from algs.tmle import estimate_tmle_df
 COVARIATES = ["W1", "W2", "W3", "W4", "W5", "W6"]
 OUTCOME_COL = "Y"
 TREATMENT_COL = "A"
+
 THRESHOLD = 0.001
 CLIP_MIN = 1e-6
 FLIP_RATES = [0.05, 0.10, 0.20]
+SAMPLE_SIZES = [100, 200, 500]
+SEEDS = [1, 2, 3, 4, 5]
 
 TRUTH_PATH = os.path.join(PROJECT_ROOT, "truth.json")
-
-ORIG_DATASETS = {
-    f"data_{i}": os.path.join(PROJECT_ROOT, "positivity", "data", f"data_{i}.csv")
-    for i in [1, 2, 3, 4, 5]
-}
+DATA_BASE_DIR = os.path.join(PROJECT_ROOT, "positivity", "data")
 
 SOURCES = {
     "llm": {
@@ -40,7 +40,7 @@ SOURCES = {
 }
 
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "positivity", "results")
-AUG_DIR = os.path.join(PROJECT_ROOT, "positivity", "augmented_qhyb_flip")
+AUG_BASE_DIR = os.path.join(PROJECT_ROOT, "positivity", "augmented_qhyb_flip")
 
 
 def load_truth():
@@ -97,11 +97,15 @@ def standardize_for_matching(orig, syn):
 def flip_hybrid_labels_on_the_fly(syn_hyb, flip_rate, seed):
     df = syn_hyb.copy()
     df[OUTCOME_COL] = df[OUTCOME_COL].round().astype(int)
+
     n = len(df)
     n_flip = int(round(flip_rate * n))
+
     rng = np.random.default_rng(seed)
     flip_idx = rng.choice(df.index.to_numpy(), size=n_flip, replace=False)
+
     df.loc[flip_idx, OUTCOME_COL] = 1 - df.loc[flip_idx, OUTCOME_COL]
+
     return df, int(n_flip)
 
 
@@ -121,7 +125,6 @@ def build_matched_rows(orig, syn_cov, threshold):
     matched_rows = []
     used_idx = set()
 
-    # Use raw propensity for rare-region detection and matching
     extreme_low = orig[orig["ps_hat_raw"] < threshold].copy()
     extreme_high = orig[orig["ps_hat_raw"] > (1 - threshold)].copy()
 
@@ -129,6 +132,7 @@ def build_matched_rows(orig, syn_cov, threshold):
         candidates = syn_std[~syn_std.index.isin(used_idx)]
         if candidates.empty:
             continue
+
         distances = np.sqrt(((candidates[COVARIATES] - row[COVARIATES]) ** 2).sum(axis=1))
         best_idx = distances.idxmin()
 
@@ -141,6 +145,7 @@ def build_matched_rows(orig, syn_cov, threshold):
         candidates = syn_std[~syn_std.index.isin(used_idx)]
         if candidates.empty:
             continue
+
         distances = np.sqrt(((candidates[COVARIATES] - row[COVARIATES]) ** 2).sum(axis=1))
         best_idx = distances.idxmin()
 
@@ -263,55 +268,166 @@ def evaluate_estimators(df, ate_true):
             "ate_true": float(ate_true),
             "bias": bias,
             "abs_bias": float(abs(bias)),
+            "sq_error": float(bias ** 2),
             "g_trunc_level": float(delta_n),
+            "n": int(len(df)),
         }
+
     return out
+
+
+def summarize_estimator_results(records, ate_true):
+    estimates = np.array([r["estimate"] for r in records], dtype=float)
+    errors = estimates - float(ate_true)
+    abs_errors = np.abs(errors)
+    sq_errors = errors ** 2
+
+    n = len(estimates)
+
+    mean_est = float(np.mean(estimates))
+    std_est = float(np.std(estimates, ddof=1)) if n > 1 else 0.0
+    se_est = float(std_est / np.sqrt(n)) if n > 1 else 0.0
+
+    bias = float(mean_est - ate_true)
+    bias_std = float(np.std(errors, ddof=1)) if n > 1 else 0.0
+    bias_se = float(bias_std / np.sqrt(n)) if n > 1 else 0.0
+
+    mae = float(np.mean(abs_errors))
+    mae_std = float(np.std(abs_errors, ddof=1)) if n > 1 else 0.0
+    mae_se = float(mae_std / np.sqrt(n)) if n > 1 else 0.0
+
+    mse = float(np.mean(sq_errors))
+    mse_std = float(np.std(sq_errors, ddof=1)) if n > 1 else 0.0
+    mse_se = float(mse_std / np.sqrt(n)) if n > 1 else 0.0
+
+    return {
+        "n_reps": int(n),
+        "ate_true": float(ate_true),
+        "estimates": estimates.tolist(),
+        "errors": errors.tolist(),
+        "abs_errors": abs_errors.tolist(),
+        "sq_errors": sq_errors.tolist(),
+
+        "mean": mean_est,
+        "std": std_est,
+        "se": se_est,
+        "ci95_low": float(mean_est - 1.96 * se_est),
+        "ci95_high": float(mean_est + 1.96 * se_est),
+
+        "bias": bias,
+        "bias_std": bias_std,
+        "bias_se": bias_se,
+        "abs_bias": float(abs(bias)),
+
+        "mae": mae,
+        "mae_std": mae_std,
+        "mae_se": mae_se,
+
+        "mse": mse,
+        "mse_std": mse_std,
+        "mse_se": mse_se,
+        "mse_ci95_low": float(max(0.0, mse - 1.96 * mse_se)),
+        "mse_ci95_high": float(mse + 1.96 * mse_se),
+        "rmse": float(np.sqrt(mse)),
+    }
+
+
+def make_orig_datasets_for_n(n):
+    data_dir = os.path.join(DATA_BASE_DIR, f"n{n}")
+    return {
+        f"data_{seed}": os.path.join(data_dir, f"data_{seed}.csv")
+        for seed in SEEDS
+    }
 
 
 def main():
     ate_true, truth = load_truth()
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
-    os.makedirs(AUG_DIR, exist_ok=True)
+    os.makedirs(AUG_BASE_DIR, exist_ok=True)
 
     all_results = {
         "truth": truth,
+        "sample_sizes": SAMPLE_SIZES,
+        "seeds": SEEDS,
         "threshold": THRESHOLD,
         "flip_rates": FLIP_RATES,
         "g_bounds_rule": "delta_n = 5 / (sqrt(n) * log(n)); g used in estimators is in [delta_n, 1-delta_n]",
         "matching_rule": "matching/extreme-region detection uses raw propensity ps_hat_raw before truncation",
-        "datasets": {},
+        "sample_size_results": {},
     }
 
-    for data_name, orig_path in ORIG_DATASETS.items():
-        all_results["datasets"][data_name] = {}
+    for n in SAMPLE_SIZES:
+        n_key = f"n{n}"
+        orig_datasets = make_orig_datasets_for_n(n)
+        aug_dir = os.path.join(AUG_BASE_DIR, n_key)
+        os.makedirs(aug_dir, exist_ok=True)
 
-        for syn_name, paths in SOURCES.items():
-            all_results["datasets"][data_name][syn_name] = {}
+        all_results["sample_size_results"][n_key] = {
+            "datasets": {},
+            "summary_by_source_flip_and_estimator": {},
+        }
 
-            for flip_rate in FLIP_RATES:
-                flip_tag = f"flip_{int(round(flip_rate * 100))}"
-                out_csv = os.path.join(AUG_DIR, f"{data_name}_{syn_name}_{flip_tag}_pair_qhyb.csv")
-
-                augmented_df, diagnostics = make_augmented_dataset(
-                    orig_path=orig_path,
-                    syn_cov_path=paths["syn_cov"],
-                    syn_hyb_path=paths["syn_hyb"],
-                    out_csv=out_csv,
-                    flip_rate=flip_rate,
-                    threshold=THRESHOLD,
-                )
-
-                estimator_results = evaluate_estimators(augmented_df, ate_true)
-
-                all_results["datasets"][data_name][syn_name][flip_tag] = {
-                    "diagnostics": diagnostics,
-                    "estimators": estimator_results,
+        records_by_source_flip_estimator = {
+            source: {
+                f"flip_{int(round(rate * 100))}": {
+                    est: []
+                    for est in ["aipw", "ipw", "outcome_regression", "tmle"]
                 }
+                for rate in FLIP_RATES
+            }
+            for source in SOURCES
+        }
 
-                print(f"Finished {data_name} | {syn_name} | {flip_tag}")
+        for data_name, orig_path in orig_datasets.items():
+            if not os.path.exists(orig_path):
+                raise FileNotFoundError(f"Missing original dataset: {orig_path}")
 
-    out_json = os.path.join(RESULTS_DIR, "pair_qhyb_flip_results.json")
+            all_results["sample_size_results"][n_key]["datasets"][data_name] = {}
+
+            for syn_name, paths in SOURCES.items():
+                all_results["sample_size_results"][n_key]["datasets"][data_name][syn_name] = {}
+
+                for flip_rate in FLIP_RATES:
+                    flip_tag = f"flip_{int(round(flip_rate * 100))}"
+                    out_csv = os.path.join(
+                        aug_dir,
+                        f"{data_name}_{syn_name}_{flip_tag}_pair_qhyb.csv",
+                    )
+
+                    augmented_df, diagnostics = make_augmented_dataset(
+                        orig_path=orig_path,
+                        syn_cov_path=paths["syn_cov"],
+                        syn_hyb_path=paths["syn_hyb"],
+                        out_csv=out_csv,
+                        flip_rate=flip_rate,
+                        threshold=THRESHOLD,
+                    )
+
+                    estimator_results = evaluate_estimators(augmented_df, ate_true)
+
+                    all_results["sample_size_results"][n_key]["datasets"][data_name][syn_name][flip_tag] = {
+                        "diagnostics": diagnostics,
+                        "estimators": estimator_results,
+                    }
+
+                    for est_name, record in estimator_results.items():
+                        records_by_source_flip_estimator[syn_name][flip_tag][est_name].append(record)
+
+                    print(f"Finished qhyb flip | n={n} | {data_name} | {syn_name} | {flip_tag}")
+
+        for syn_name, flip_dict in records_by_source_flip_estimator.items():
+            all_results["sample_size_results"][n_key]["summary_by_source_flip_and_estimator"][syn_name] = {}
+
+            for flip_tag, est_dict in flip_dict.items():
+                all_results["sample_size_results"][n_key]["summary_by_source_flip_and_estimator"][syn_name][flip_tag] = {}
+
+                for est_name, records in est_dict.items():
+                    all_results["sample_size_results"][n_key]["summary_by_source_flip_and_estimator"][syn_name][flip_tag][est_name] = (
+                        summarize_estimator_results(records, ate_true)
+                    )
+
+    out_json = os.path.join(RESULTS_DIR, "pair_qhyb_flip_results_by_n.json")
     with open(out_json, "w") as f:
         json.dump(all_results, f, indent=4)
 
