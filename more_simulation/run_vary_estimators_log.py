@@ -21,6 +21,7 @@ OUTCOME_COL = "Y"
 TREATMENT_COL = "A"
 SEEDS = [1, 2, 3, 4, 5]
 SUBSAMPLE_N = 1000
+EXPERIMENT_NAME = "logistic_outcome_misspecification"
 
 
 def get_w_cols(columns):
@@ -105,54 +106,47 @@ def summarize_estimates(estimates, ate_true):
 
 def get_estimator_config(estimator_name):
     """
-    Linear-outcome comparison:
+    Logistic-outcome misspecification comparison.
 
-      IPW:
-        g = RF
-        no Q model
-        Y treated as continuous
+    Main RF comparison:
+      g = random forest
+      Q = random forest
 
-      AIPW:
-        g = RF
-        Q = linear regression
-        Y treated as continuous
+    This script:
+      g = random forest for all estimators that use a propensity model
+      Q = logistic regression for estimators that use an outcome model
 
-      Outcome regression:
-        Q = linear regression
-        Y treated as continuous
+    Because Y is binary, all estimators treat Y as binary here.
 
-      TMLE:
-        g = logistic regression
-        Q = logistic regression
-        Y treated as binary
-
-    TMLE uses logistic fluctuation, so it must use binary outcome_type.
+    IPW has no Q model, so it is included as a weighting-only benchmark.
+    The complex settings are misspecified because the true outcome model is
+    nonlinear while Q is restricted to logistic regression.
     """
     if estimator_name == "ipw":
         return {
-            "outcome_type": "continuous",
+            "outcome_type": "binary",
             "g_learner": "rf",
             "q_learner": None,
         }
 
     if estimator_name == "aipw":
         return {
-            "outcome_type": "continuous",
+            "outcome_type": "binary",
             "g_learner": "rf",
-            "q_learner": "linear",
+            "q_learner": "logistic",
         }
 
     if estimator_name == "outcome_regression":
         return {
-            "outcome_type": "continuous",
+            "outcome_type": "binary",
             "g_learner": None,
-            "q_learner": "linear",
+            "q_learner": "logistic",
         }
 
     if estimator_name == "tmle":
         return {
             "outcome_type": "binary",
-            "g_learner": "logistic",
+            "g_learner": "rf",
             "q_learner": "logistic",
         }
 
@@ -178,15 +172,18 @@ def evaluate_dataset(path, estimator_fn, estimator_name, covariates, ate_true):
         .astype("Int64")
     )
 
-    # Do not round Y here globally.
-    # Each estimator will handle Y according to its outcome_type.
-    # AIPW/IPW/OR use continuous Y.
-    # TMLE uses binary Y and rounds inside estimate_tmle_df.
-    df[OUTCOME_COL] = pd.to_numeric(df[OUTCOME_COL], errors="coerce")
+    df[OUTCOME_COL] = (
+        pd.to_numeric(df[OUTCOME_COL], errors="coerce")
+        .round()
+        .astype("Int64")
+    )
 
     before = len(df)
     df = df.dropna().copy()
     after = len(df)
+
+    for c in [TREATMENT_COL, OUTCOME_COL]:
+        df[c] = df[c].astype(int)
 
     n = len(df)
     subsample_n = min(SUBSAMPLE_N, n)
@@ -234,6 +231,7 @@ def evaluate_dataset(path, estimator_fn, estimator_name, covariates, ate_true):
             "outcome_type": config["outcome_type"],
             "q_learner": config["q_learner"],
             "g_learner": config["g_learner"],
+            "experiment": EXPERIMENT_NAME,
         }
     )
 
@@ -269,7 +267,7 @@ def evaluate_setting(setting_dir: Path):
         "d": len(covariates),
         "subsample_n": SUBSAMPLE_N,
         "seeds": SEEDS,
-        "experiment": "linear_outcome_with_logistic_tmle",
+        "experiment": EXPERIMENT_NAME,
         "estimator_configs": {
             est_name: get_estimator_config(est_name)
             for est_name in estimators.keys()
@@ -318,6 +316,7 @@ def evaluate_setting(setting_dir: Path):
                     "outcome_type": config["outcome_type"],
                     "q_learner": config["q_learner"],
                     "g_learner": config["g_learner"],
+                    "experiment": EXPERIMENT_NAME,
                 }
 
     return results
@@ -327,7 +326,7 @@ def compact_results(all_results):
     compact = {
         "subsample_n": SUBSAMPLE_N,
         "seeds": SEEDS,
-        "experiment": "linear_outcome_with_logistic_tmle",
+        "experiment": EXPERIMENT_NAME,
         "settings": {},
     }
 
@@ -341,7 +340,7 @@ def compact_results(all_results):
             "n_test": truth.get("n_test"),
             "overlap": truth.get("overlap"),
             "outcome_mode": truth.get("outcome_mode"),
-            "experiment": "linear_outcome_with_logistic_tmle",
+            "experiment": EXPERIMENT_NAME,
             "estimator_configs": setting_results.get("estimator_configs", {}),
             "datasets": {},
         }
@@ -358,6 +357,7 @@ def compact_results(all_results):
                         "outcome_type": metrics.get("outcome_type", config["outcome_type"]),
                         "q_learner": metrics.get("q_learner", config["q_learner"]),
                         "g_learner": metrics.get("g_learner", config["g_learner"]),
+                        "experiment": EXPERIMENT_NAME,
                     }
                     continue
 
@@ -374,6 +374,7 @@ def compact_results(all_results):
                     "outcome_type": metrics.get("outcome_type", config["outcome_type"]),
                     "q_learner": metrics.get("q_learner", config["q_learner"]),
                     "g_learner": metrics.get("g_learner", config["g_learner"]),
+                    "experiment": EXPERIMENT_NAME,
                 }
 
     return compact
@@ -383,7 +384,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=str, default="simulator_vary_data")
     parser.add_argument("--data-dir", type=str, default=None)
-    parser.add_argument("--output-dir", type=str, default="vary_results_linear")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="vary_results_logistic",
+    )
     args = parser.parse_args()
 
     base_dir = Path(__file__).resolve().parent
@@ -394,7 +399,7 @@ def main():
     all_results = {
         "subsample_n": SUBSAMPLE_N,
         "seeds": SEEDS,
-        "experiment": "linear_outcome_with_logistic_tmle",
+        "experiment": EXPERIMENT_NAME,
         "settings": {},
     }
 
@@ -417,18 +422,18 @@ def main():
         setting_results = evaluate_setting(setting_dir)
         all_results["settings"][setting_dir.name] = setting_results
 
-        per_setting_out = output_dir / f"{setting_dir.name}_estimators_linear.json"
+        per_setting_out = output_dir / f"{setting_dir.name}_estimators_logistic.json"
         with open(per_setting_out, "w") as f:
             json.dump(setting_results, f, indent=2)
 
         print(f"Saved per-setting results to {per_setting_out}")
 
-    full_out = output_dir / "vary_estimators_linear.json"
+    full_out = output_dir / "vary_estimators_logistic.json"
     with open(full_out, "w") as f:
         json.dump(all_results, f, indent=2)
 
     compact = compact_results(all_results)
-    compact_out = output_dir / "vary_estimators_linear_compact.json"
+    compact_out = output_dir / "vary_estimators_logistic_compact.json"
     with open(compact_out, "w") as f:
         json.dump(compact, f, indent=2)
 

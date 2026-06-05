@@ -27,10 +27,10 @@ DATASETS = [
 ]
 
 DISPLAY_LABELS = {
-    "llm_syn_clean": "LLM",
-    "llm_syn_hybrid": "LLM+Hybrid",
-    "gan_syn_clean": "GAN",
-    "gan_syn_hybrid": "GAN+Hybrid",
+    "llm_syn_clean": "LLM\nFull generative",
+    "llm_syn_hybrid": "LLM\nHybrid",
+    "gan_syn_clean": "GAN\nFull generative",
+    "gan_syn_hybrid": "GAN\nHybrid",
 }
 
 ESTIMATORS = ["ipw", "aipw", "outcome_regression", "tmle"]
@@ -55,9 +55,9 @@ GENERATOR_PANELS = {
 }
 
 PAIR_LABELS = {
-    "llm_syn_clean": "Clean",
+    "llm_syn_clean": "Full generative",
     "llm_syn_hybrid": "Hybrid",
-    "gan_syn_clean": "Clean",
+    "gan_syn_clean": "Full generative",
     "gan_syn_hybrid": "Hybrid",
 }
 
@@ -132,10 +132,6 @@ def style_axis(ax):
 
 
 def style_y_ticks(ax, nbins=6):
-    """
-    Make y-axis ticks readable and non-confusing.
-    Avoid scientific notation unless values are extremely small/large.
-    """
     ax.yaxis.set_major_locator(MaxNLocator(nbins=nbins, min_n_ticks=4))
 
     formatter = ScalarFormatter(useMathText=False)
@@ -212,9 +208,6 @@ def plot_tstr_and_dcr(metrics):
 
 
 def nice_upper_limit(values):
-    """
-    Choose a readable upper y-limit with some headroom.
-    """
     max_v = max(values) if values else 0.0
 
     if max_v <= 0:
@@ -240,11 +233,8 @@ def plot_ate_mse_llm_gan_panels(metrics):
 
     Each panel has:
         x-axis: estimator
-        bars: Clean vs Hybrid
+        bars: Full generative vs Hybrid
         y-axis: ATE MSE
-
-    This avoids mixing LLM and GAN in the same crowded estimator panel
-    and makes the y-axis ticks easier to read.
     """
     x = np.arange(len(ESTIMATORS))
     width = 0.36
@@ -258,22 +248,22 @@ def plot_ate_mse_llm_gan_panels(metrics):
     )
 
     for ax, (gen_name, ds_pair) in zip(axes, GENERATOR_PANELS.items()):
-        clean_ds, hybrid_ds = ds_pair
+        full_ds, hybrid_ds = ds_pair
 
-        clean_vals = [metrics[clean_ds]["ate_mse"][est] for est in ESTIMATORS]
+        full_vals = [metrics[full_ds]["ate_mse"][est] for est in ESTIMATORS]
         hybrid_vals = [metrics[hybrid_ds]["ate_mse"][est] for est in ESTIMATORS]
 
-        clean_errs = [metrics[clean_ds]["ate_mse_se"][est] for est in ESTIMATORS]
+        full_errs = [metrics[full_ds]["ate_mse_se"][est] for est in ESTIMATORS]
         hybrid_errs = [metrics[hybrid_ds]["ate_mse_se"][est] for est in ESTIMATORS]
 
-        bars_clean = ax.bar(
+        bars_full = ax.bar(
             x - width / 2,
-            clean_vals,
+            full_vals,
             width,
-            yerr=clean_errs,
+            yerr=full_errs,
             capsize=3,
-            label="Clean",
-            color=BAR_COLORS[clean_ds],
+            label="Full generative",
+            color=BAR_COLORS[full_ds],
         )
 
         bars_hybrid = ax.bar(
@@ -293,16 +283,17 @@ def plot_ate_mse_llm_gan_panels(metrics):
         ax.legend(frameon=False, fontsize=9)
 
         all_vals_with_errs = [
-            v + e for v, e in zip(clean_vals, clean_errs)
+            v + e for v, e in zip(full_vals, full_errs)
         ] + [
             v + e for v, e in zip(hybrid_vals, hybrid_errs)
         ]
+
         ax.set_ylim(0, nice_upper_limit(all_vals_with_errs))
 
         style_axis(ax)
         style_y_ticks(ax, nbins=6)
 
-        add_labels(ax, bars_clean, fmt="{:.3f}", fontsize=7, y_offset=3)
+        add_labels(ax, bars_full, fmt="{:.3f}", fontsize=7, y_offset=3)
         add_labels(ax, bars_hybrid, fmt="{:.3f}", fontsize=7, y_offset=3)
 
     fig.suptitle("Causal Fidelity: ATE MSE by Generator", fontsize=13)

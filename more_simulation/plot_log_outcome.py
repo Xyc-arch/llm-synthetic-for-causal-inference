@@ -22,15 +22,14 @@ DISPLAY_LABELS = {
     "gan_syn_hybrid": "GAN\nHybrid",
 }
 
-# Linear outcome runner:
-#   IPW: RF g, continuous Y
-#   AIPW: RF g + linear Q, continuous Y
-#   OR: linear Q, continuous Y
-#   TMLE: logistic g + logistic Q, binary Y
-ESTIMATORS = ["ipw", "aipw", "outcome_regression", "tmle"]
+# Logistic-outcome misspecification comparison:
+#   AIPW: RF g + logistic Q
+#   OR: logistic Q
+#   TMLE: RF g + logistic Q
+# IPW is omitted because it does not use an outcome model.
+ESTIMATORS = ["aipw", "outcome_regression", "tmle"]
 
 ESTIMATOR_LABELS = {
-    "ipw": "IPW",
     "aipw": "AIPW",
     "outcome_regression": "OR",
     "tmle": "TMLE",
@@ -185,7 +184,7 @@ def plot_ate_mse_for_setting(setting_name, ate_setting, out_dir):
     fig, axes = plt.subplots(
         1,
         2,
-        figsize=(11.5, 4.0),
+        figsize=(10.5, 4.0),
         sharey=False,
         constrained_layout=True,
     )
@@ -258,7 +257,7 @@ def plot_ate_mse_for_setting(setting_name, ate_setting, out_dir):
         add_labels(ax, bars_full_gen, fmt="{:.3f}", fontsize=7, y_offset=3)
         add_labels(ax, bars_hybrid, fmt="{:.3f}", fontsize=7, y_offset=3)
 
-    out_path = out_dir / "ate_mse_llm_gan_panels_linear.png"
+    out_path = out_dir / "ate_mse_llm_gan_panels_logistic.png"
     fig.savefig(out_path, dpi=250, bbox_inches="tight")
     plt.close(fig)
 
@@ -270,12 +269,12 @@ def main():
     parser.add_argument(
         "--ate-file",
         type=str,
-        default="vary_results_linear/vary_estimators_linear_compact.json",
+        default="vary_results_logistic/vary_estimators_logistic_compact.json",
     )
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="plot_linear_outcome",
+        default="plot_logistic_outcome",
     )
     parser.add_argument("--setting", type=str, default=None)
     args = parser.parse_args()
