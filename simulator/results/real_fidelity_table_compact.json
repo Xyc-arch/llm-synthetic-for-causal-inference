@@ -1,0 +1,121 @@
+{
+  "columns": [
+    "Source",
+    "Estimator",
+    "Sign correct",
+    "Real bias",
+    "Syn. bias",
+    "Real var",
+    "Syn. var",
+    "Real RMSE",
+    "Syn. RMSE",
+    "Real MSE",
+    "Syn. MSE"
+  ],
+  "rows": [
+    {
+      "Source": "LLM",
+      "Estimator": "IPW",
+      "Sign correct": "Yes",
+      "Real bias": -0.0012,
+      "Syn. bias": -0.0029,
+      "Real var": 0.000279,
+      "Syn. var": 0.00066,
+      "Real RMSE": 0.0163,
+      "Syn. RMSE": 0.0252,
+      "Real MSE": "0.000267 \u00b1 0.000065",
+      "Syn. MSE": "0.000635 \u00b1 0.000389"
+    },
+    {
+      "Source": "LLM",
+      "Estimator": "TMLE",
+      "Sign correct": "Yes",
+      "Real bias": 0.0243,
+      "Syn. bias": 0.0202,
+      "Real var": 0.000379,
+      "Syn. var": 0.000762,
+      "Real RMSE": 0.0308,
+      "Syn. RMSE": 0.0337,
+      "Real MSE": "0.000948 \u00b1 0.000204",
+      "Syn. MSE": "0.001133 \u00b1 0.000279"
+    },
+    {
+      "Source": "LLM",
+      "Estimator": "AIPW",
+      "Sign correct": "Yes",
+      "Real bias": -0.0263,
+      "Syn. bias": -0.0302,
+      "Real var": 0.000314,
+      "Syn. var": 0.000621,
+      "Real RMSE": 0.0315,
+      "Syn. RMSE": 0.0388,
+      "Real MSE": "0.000989 \u00b1 0.000222",
+      "Syn. MSE": "0.001504 \u00b1 0.000623"
+    },
+    {
+      "Source": "LLM",
+      "Estimator": "OR",
+      "Sign correct": "Yes",
+      "Real bias": -0.0343,
+      "Syn. bias": -0.0375,
+      "Real var": 0.000315,
+      "Syn. var": 0.00063,
+      "Real RMSE": 0.0384,
+      "Syn. RMSE": 0.0447,
+      "Real MSE": "0.001478 \u00b1 0.000277",
+      "Syn. MSE": "0.002002 \u00b1 0.000687"
+    },
+    {
+      "Source": "GAN",
+      "Estimator": "IPW",
+      "Sign correct": "Yes",
+      "Real bias": -0.0012,
+      "Syn. bias": -0.1025,
+      "Real var": 0.000279,
+      "Syn. var": 0.00053,
+      "Real RMSE": 0.0163,
+      "Syn. RMSE": 0.105,
+      "Real MSE": "0.000267 \u00b1 0.000065",
+      "Syn. MSE": "0.011015 \u00b1 0.001016"
+    },
+    {
+      "Source": "GAN",
+      "Estimator": "TMLE",
+      "Sign correct": "No",
+      "Real bias": 0.0243,
+      "Syn. bias": -0.0808,
+      "Real var": 0.000379,
+      "Syn. var": 0.000892,
+      "Real RMSE": 0.0308,
+      "Syn. RMSE": 0.0859,
+      "Real MSE": "0.000948 \u00b1 0.000204",
+      "Syn. MSE": "0.007380 \u00b1 0.001103"
+    },
+    {
+      "Source": "GAN",
+      "Estimator": "AIPW",
+      "Sign correct": "Yes",
+      "Real bias": -0.0263,
+      "Syn. bias": -0.1275,
+      "Real var": 0.000314,
+      "Syn. var": 0.000589,
+      "Real RMSE": 0.0315,
+      "Syn. RMSE": 0.1297,
+      "Real MSE": "0.000989 \u00b1 0.000222",
+      "Syn. MSE": "0.016822 \u00b1 0.001417"
+    },
+    {
+      "Source": "GAN",
+      "Estimator": "OR",
+      "Sign correct": "Yes",
+      "Real bias": -0.0343,
+      "Syn. bias": -0.1343,
+      "Real var": 0.000315,
+      "Syn. var": 0.000578,
+      "Real RMSE": 0.0384,
+      "Syn. RMSE": 0.1363,
+      "Real MSE": "0.001478 \u00b1 0.000277",
+      "Syn. MSE": "0.018582 \u00b1 0.001488"
+    }
+  ]
+}

@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 # Paths
 # =========================
 
-PROJECT_ROOT = Path("/home/ubuntu/syn_causal")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ACTG_DIR = PROJECT_ROOT / "actg175"
 PRIVACY_DIR = PROJECT_ROOT / "privacy"
 

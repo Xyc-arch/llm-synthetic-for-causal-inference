@@ -1,0 +1,52 @@
+{
+    "actg_original": {
+        "train_file": "./actg175/data/actg175_clean.csv",
+        "test_file": "./actg175/data/actg175_clean.csv",
+        "auc": 0.9378237773691271,
+        "threshold_cd420": 368.5,
+        "n_train": 1046,
+        "n_test": 1046,
+        "positive_rate_train": 0.5,
+        "positive_rate_test": 0.5
+    },
+    "llm_syn_clean": {
+        "train_file": "./actg175/llm_data/syn_clean.csv",
+        "test_file": "./actg175/data/actg175_clean.csv",
+        "auc": 0.7422393969195222,
+        "threshold_cd420": 368.5,
+        "n_train": 49997,
+        "n_test": 1046,
+        "positive_rate_train": 0.5021301278076684,
+        "positive_rate_test": 0.5
+    },
+    "llm_syn_hybrid": {
+        "train_file": "./actg175/llm_data/syn_hybrid.csv",
+        "test_file": "./actg175/data/actg175_clean.csv",
+        "auc": 0.8102065960099296,
+        "threshold_cd420": 368.5,
+        "n_train": 49749,
+        "n_test": 1046,
+        "positive_rate_train": 0.5724336167561157,
+        "positive_rate_test": 0.5
+    },
+    "ctgan_syn_clean": {
+        "train_file": "./actg175/ctgan_data/syn_clean.csv",
+        "test_file": "./actg175/data/actg175_clean.csv",
+        "auc": 0.444395292638075,
+        "threshold_cd420": 368.5,
+        "n_train": 50000,
+        "n_test": 1046,
+        "positive_rate_train": 0.10612,
+        "positive_rate_test": 0.5
+    },
+    "ctgan_syn_hybrid": {
+        "train_file": "./actg175/ctgan_data/syn_hybrid.csv",
+        "test_file": "./actg175/data/actg175_clean.csv",
+        "auc": 0.8123599325848447,
+        "threshold_cd420": 368.5,
+        "n_train": 20535,
+        "n_test": 1046,
+        "positive_rate_train": 0.25001217433649864,
+        "positive_rate_test": 0.5
+    }
+}

@@ -1,0 +1,535 @@
+{
+    "truth": {
+        "seed": 42,
+        "n": 100000,
+        "rct": true,
+        "ate_true": 0.41825623603939066,
+        "y1_truth": 0.8693832485030021,
+        "y0_truth": 0.4511270124636115
+    },
+    "threshold": 0.001,
+    "g_bounds_rule": "delta_n = 5 / (sqrt(n) * log(n)); g used in estimators is in [delta_n, 1-delta_n]",
+    "matching_rule": "matching/extreme-region detection uses raw propensity ps_hat_raw before truncation",
+    "datasets": {
+        "data_1": {
+            "llm": {
+                "diagnostics": {
+                    "orig_file": "./positivity/data/data_1.csv",
+                    "syn_file": "./llm_data/syn_clean.csv",
+                    "output_file": "./positivity/augmented_self_supervised/data_1_llm_self_supervised_pair.csv",
+                    "g_trunc_level": 0.06672937201261334,
+                    "n_orig": 200,
+                    "n_augmented": 280,
+                    "n_added": 80,
+                    "threshold": 0.001,
+                    "extreme_low_count": 79,
+                    "extreme_high_count": 1,
+                    "matched_low_added_as_treated": 79,
+                    "matched_high_added_as_control": 1,
+                    "used_synthetic_rows": 80,
+                    "min_ps_hat_raw": 0.0,
+                    "max_ps_hat_raw": 1.0,
+                    "min_ps_hat_trunc": 0.06672937201261334,
+                    "max_ps_hat_trunc": 0.9332706279873867
+                },
+                "estimators": {
+                    "aipw": {
+                        "estimate": 0.09825107106762222,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.32000516497176845,
+                        "abs_bias": 0.32000516497176845,
+                        "g_trunc_level": 0.05302898127119713
+                    },
+                    "ipw": {
+                        "estimate": 0.15805329351400776,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.2602029425253829,
+                        "abs_bias": 0.2602029425253829,
+                        "g_trunc_level": 0.05302898127119713
+                    },
+                    "outcome_regression": {
+                        "estimate": 0.09382142857142856,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.3244348074679621,
+                        "abs_bias": 0.3244348074679621,
+                        "g_trunc_level": 0.05302898127119713
+                    },
+                    "tmle": {
+                        "estimate": 0.1264705220056875,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.2917857140337031,
+                        "abs_bias": 0.2917857140337031,
+                        "g_trunc_level": 0.05302898127119713
+                    }
+                }
+            },
+            "gan": {
+                "diagnostics": {
+                    "orig_file": "./positivity/data/data_1.csv",
+                    "syn_file": "./gan_data/syn_clean.csv",
+                    "output_file": "./positivity/augmented_self_supervised/data_1_gan_self_supervised_pair.csv",
+                    "g_trunc_level": 0.06672937201261334,
+                    "n_orig": 200,
+                    "n_augmented": 280,
+                    "n_added": 80,
+                    "threshold": 0.001,
+                    "extreme_low_count": 79,
+                    "extreme_high_count": 1,
+                    "matched_low_added_as_treated": 79,
+                    "matched_high_added_as_control": 1,
+                    "used_synthetic_rows": 80,
+                    "min_ps_hat_raw": 0.0,
+                    "max_ps_hat_raw": 1.0,
+                    "min_ps_hat_trunc": 0.06672937201261334,
+                    "max_ps_hat_trunc": 0.9332706279873867
+                },
+                "estimators": {
+                    "aipw": {
+                        "estimate": 0.1461705683393899,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.27208566770000076,
+                        "abs_bias": 0.27208566770000076,
+                        "g_trunc_level": 0.05302898127119713
+                    },
+                    "ipw": {
+                        "estimate": 0.20620902851283485,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.21204720752655581,
+                        "abs_bias": 0.21204720752655581,
+                        "g_trunc_level": 0.05302898127119713
+                    },
+                    "outcome_regression": {
+                        "estimate": 0.13192857142857142,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.28632766461081927,
+                        "abs_bias": 0.28632766461081927,
+                        "g_trunc_level": 0.05302898127119713
+                    },
+                    "tmle": {
+                        "estimate": 0.2228437304476217,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.19541250559176895,
+                        "abs_bias": 0.19541250559176895,
+                        "g_trunc_level": 0.05302898127119713
+                    }
+                }
+            }
+        },
+        "data_2": {
+            "llm": {
+                "diagnostics": {
+                    "orig_file": "./positivity/data/data_2.csv",
+                    "syn_file": "./llm_data/syn_clean.csv",
+                    "output_file": "./positivity/augmented_self_supervised/data_2_llm_self_supervised_pair.csv",
+                    "g_trunc_level": 0.06672937201261334,
+                    "n_orig": 200,
+                    "n_augmented": 278,
+                    "n_added": 78,
+                    "threshold": 0.001,
+                    "extreme_low_count": 78,
+                    "extreme_high_count": 0,
+                    "matched_low_added_as_treated": 78,
+                    "matched_high_added_as_control": 0,
+                    "used_synthetic_rows": 78,
+                    "min_ps_hat_raw": 0.0,
+                    "max_ps_hat_raw": 0.98,
+                    "min_ps_hat_trunc": 0.06672937201261334,
+                    "max_ps_hat_trunc": 0.9332706279873867
+                },
+                "estimators": {
+                    "aipw": {
+                        "estimate": 0.2930225160935642,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.12523371994582644,
+                        "abs_bias": 0.12523371994582644,
+                        "g_trunc_level": 0.053287182255837756
+                    },
+                    "ipw": {
+                        "estimate": 0.3386468583432808,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.07960937769610987,
+                        "abs_bias": 0.07960937769610987,
+                        "g_trunc_level": 0.053287182255837756
+                    },
+                    "outcome_regression": {
+                        "estimate": 0.2810431654676259,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.13721307057176474,
+                        "abs_bias": 0.13721307057176474,
+                        "g_trunc_level": 0.053287182255837756
+                    },
+                    "tmle": {
+                        "estimate": 0.35957841957049674,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.05867781646889392,
+                        "abs_bias": 0.05867781646889392,
+                        "g_trunc_level": 0.053287182255837756
+                    }
+                }
+            },
+            "gan": {
+                "diagnostics": {
+                    "orig_file": "./positivity/data/data_2.csv",
+                    "syn_file": "./gan_data/syn_clean.csv",
+                    "output_file": "./positivity/augmented_self_supervised/data_2_gan_self_supervised_pair.csv",
+                    "g_trunc_level": 0.06672937201261334,
+                    "n_orig": 200,
+                    "n_augmented": 278,
+                    "n_added": 78,
+                    "threshold": 0.001,
+                    "extreme_low_count": 78,
+                    "extreme_high_count": 0,
+                    "matched_low_added_as_treated": 78,
+                    "matched_high_added_as_control": 0,
+                    "used_synthetic_rows": 78,
+                    "min_ps_hat_raw": 0.0,
+                    "max_ps_hat_raw": 0.98,
+                    "min_ps_hat_trunc": 0.06672937201261334,
+                    "max_ps_hat_trunc": 0.9332706279873867
+                },
+                "estimators": {
+                    "aipw": {
+                        "estimate": 0.3459601304805131,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.07229610555887755,
+                        "abs_bias": 0.07229610555887755,
+                        "g_trunc_level": 0.053287182255837756
+                    },
+                    "ipw": {
+                        "estimate": 0.4092957618990521,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.00896047414033857,
+                        "abs_bias": 0.00896047414033857,
+                        "g_trunc_level": 0.053287182255837756
+                    },
+                    "outcome_regression": {
+                        "estimate": 0.3244964028776978,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.09375983316169284,
+                        "abs_bias": 0.09375983316169284,
+                        "g_trunc_level": 0.053287182255837756
+                    },
+                    "tmle": {
+                        "estimate": 0.4528180501576623,
+                        "ate_true": 0.41825623603939066,
+                        "bias": 0.03456181411827164,
+                        "abs_bias": 0.03456181411827164,
+                        "g_trunc_level": 0.053287182255837756
+                    }
+                }
+            }
+        },
+        "data_3": {
+            "llm": {
+                "diagnostics": {
+                    "orig_file": "./positivity/data/data_3.csv",
+                    "syn_file": "./llm_data/syn_clean.csv",
+                    "output_file": "./positivity/augmented_self_supervised/data_3_llm_self_supervised_pair.csv",
+                    "g_trunc_level": 0.06672937201261334,
+                    "n_orig": 200,
+                    "n_augmented": 263,
+                    "n_added": 63,
+                    "threshold": 0.001,
+                    "extreme_low_count": 63,
+                    "extreme_high_count": 0,
+                    "matched_low_added_as_treated": 63,
+                    "matched_high_added_as_control": 0,
+                    "used_synthetic_rows": 63,
+                    "min_ps_hat_raw": 0.0,
+                    "max_ps_hat_raw": 0.97,
+                    "min_ps_hat_trunc": 0.06672937201261334,
+                    "max_ps_hat_trunc": 0.9332706279873867
+                },
+                "estimators": {
+                    "aipw": {
+                        "estimate": 0.26642229968731274,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.15183393635207793,
+                        "abs_bias": 0.15183393635207793,
+                        "g_trunc_level": 0.05533106339284122
+                    },
+                    "ipw": {
+                        "estimate": 0.3106597271857198,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.10759650885367084,
+                        "abs_bias": 0.10759650885367084,
+                        "g_trunc_level": 0.05533106339284122
+                    },
+                    "outcome_regression": {
+                        "estimate": 0.24543726235741445,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.1728189736819762,
+                        "abs_bias": 0.1728189736819762,
+                        "g_trunc_level": 0.05533106339284122
+                    },
+                    "tmle": {
+                        "estimate": 0.38613045176143046,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.0321257842779602,
+                        "abs_bias": 0.0321257842779602,
+                        "g_trunc_level": 0.05533106339284122
+                    }
+                }
+            },
+            "gan": {
+                "diagnostics": {
+                    "orig_file": "./positivity/data/data_3.csv",
+                    "syn_file": "./gan_data/syn_clean.csv",
+                    "output_file": "./positivity/augmented_self_supervised/data_3_gan_self_supervised_pair.csv",
+                    "g_trunc_level": 0.06672937201261334,
+                    "n_orig": 200,
+                    "n_augmented": 263,
+                    "n_added": 63,
+                    "threshold": 0.001,
+                    "extreme_low_count": 63,
+                    "extreme_high_count": 0,
+                    "matched_low_added_as_treated": 63,
+                    "matched_high_added_as_control": 0,
+                    "used_synthetic_rows": 63,
+                    "min_ps_hat_raw": 0.0,
+                    "max_ps_hat_raw": 0.97,
+                    "min_ps_hat_trunc": 0.06672937201261334,
+                    "max_ps_hat_trunc": 0.9332706279873867
+                },
+                "estimators": {
+                    "aipw": {
+                        "estimate": 0.33712863981073016,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.0811275962286605,
+                        "abs_bias": 0.0811275962286605,
+                        "g_trunc_level": 0.05533106339284122
+                    },
+                    "ipw": {
+                        "estimate": 0.3629726542832844,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.05528358175610626,
+                        "abs_bias": 0.05528358175610626,
+                        "g_trunc_level": 0.05533106339284122
+                    },
+                    "outcome_regression": {
+                        "estimate": 0.3276425855513308,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.09061365048805986,
+                        "abs_bias": 0.09061365048805986,
+                        "g_trunc_level": 0.05533106339284122
+                    },
+                    "tmle": {
+                        "estimate": 0.4111972588233326,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.007058977216058082,
+                        "abs_bias": 0.007058977216058082,
+                        "g_trunc_level": 0.05533106339284122
+                    }
+                }
+            }
+        },
+        "data_4": {
+            "llm": {
+                "diagnostics": {
+                    "orig_file": "./positivity/data/data_4.csv",
+                    "syn_file": "./llm_data/syn_clean.csv",
+                    "output_file": "./positivity/augmented_self_supervised/data_4_llm_self_supervised_pair.csv",
+                    "g_trunc_level": 0.06672937201261334,
+                    "n_orig": 200,
+                    "n_augmented": 285,
+                    "n_added": 85,
+                    "threshold": 0.001,
+                    "extreme_low_count": 85,
+                    "extreme_high_count": 0,
+                    "matched_low_added_as_treated": 85,
+                    "matched_high_added_as_control": 0,
+                    "used_synthetic_rows": 85,
+                    "min_ps_hat_raw": 0.0,
+                    "max_ps_hat_raw": 0.95,
+                    "min_ps_hat_trunc": 0.06672937201261334,
+                    "max_ps_hat_trunc": 0.9332706279873867
+                },
+                "estimators": {
+                    "aipw": {
+                        "estimate": 0.24237214074493976,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.1758840952944509,
+                        "abs_bias": 0.1758840952944509,
+                        "g_trunc_level": 0.0523971704206729
+                    },
+                    "ipw": {
+                        "estimate": 0.27531135804229,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.14294487799710065,
+                        "abs_bias": 0.14294487799710065,
+                        "g_trunc_level": 0.0523971704206729
+                    },
+                    "outcome_regression": {
+                        "estimate": 0.2260701754385965,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.19218606060079416,
+                        "abs_bias": 0.19218606060079416,
+                        "g_trunc_level": 0.0523971704206729
+                    },
+                    "tmle": {
+                        "estimate": 0.33567303965106504,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.08258319638832562,
+                        "abs_bias": 0.08258319638832562,
+                        "g_trunc_level": 0.0523971704206729
+                    }
+                }
+            },
+            "gan": {
+                "diagnostics": {
+                    "orig_file": "./positivity/data/data_4.csv",
+                    "syn_file": "./gan_data/syn_clean.csv",
+                    "output_file": "./positivity/augmented_self_supervised/data_4_gan_self_supervised_pair.csv",
+                    "g_trunc_level": 0.06672937201261334,
+                    "n_orig": 200,
+                    "n_augmented": 285,
+                    "n_added": 85,
+                    "threshold": 0.001,
+                    "extreme_low_count": 85,
+                    "extreme_high_count": 0,
+                    "matched_low_added_as_treated": 85,
+                    "matched_high_added_as_control": 0,
+                    "used_synthetic_rows": 85,
+                    "min_ps_hat_raw": 0.0,
+                    "max_ps_hat_raw": 0.95,
+                    "min_ps_hat_trunc": 0.06672937201261334,
+                    "max_ps_hat_trunc": 0.9332706279873867
+                },
+                "estimators": {
+                    "aipw": {
+                        "estimate": 0.24589210100470046,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.1723641350346902,
+                        "abs_bias": 0.1723641350346902,
+                        "g_trunc_level": 0.0523971704206729
+                    },
+                    "ipw": {
+                        "estimate": 0.2839091744869007,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.13434706155249,
+                        "abs_bias": 0.13434706155249,
+                        "g_trunc_level": 0.0523971704206729
+                    },
+                    "outcome_regression": {
+                        "estimate": 0.22210526315789472,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.19615097288149594,
+                        "abs_bias": 0.19615097288149594,
+                        "g_trunc_level": 0.0523971704206729
+                    },
+                    "tmle": {
+                        "estimate": 0.3549076387757352,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.06334859726365544,
+                        "abs_bias": 0.06334859726365544,
+                        "g_trunc_level": 0.0523971704206729
+                    }
+                }
+            }
+        },
+        "data_5": {
+            "llm": {
+                "diagnostics": {
+                    "orig_file": "./positivity/data/data_5.csv",
+                    "syn_file": "./llm_data/syn_clean.csv",
+                    "output_file": "./positivity/augmented_self_supervised/data_5_llm_self_supervised_pair.csv",
+                    "g_trunc_level": 0.06672937201261334,
+                    "n_orig": 200,
+                    "n_augmented": 270,
+                    "n_added": 70,
+                    "threshold": 0.001,
+                    "extreme_low_count": 70,
+                    "extreme_high_count": 0,
+                    "matched_low_added_as_treated": 70,
+                    "matched_high_added_as_control": 0,
+                    "used_synthetic_rows": 70,
+                    "min_ps_hat_raw": 0.0,
+                    "max_ps_hat_raw": 0.94,
+                    "min_ps_hat_trunc": 0.06672937201261334,
+                    "max_ps_hat_trunc": 0.9332706279873867
+                },
+                "estimators": {
+                    "aipw": {
+                        "estimate": 0.31980573523549505,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.09845050080389561,
+                        "abs_bias": 0.09845050080389561,
+                        "g_trunc_level": 0.05435287156874711
+                    },
+                    "ipw": {
+                        "estimate": 0.3658370414451983,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.052419194594192364,
+                        "abs_bias": 0.052419194594192364,
+                        "g_trunc_level": 0.05435287156874711
+                    },
+                    "outcome_regression": {
+                        "estimate": 0.3025555555555555,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.11570068048383514,
+                        "abs_bias": 0.11570068048383514,
+                        "g_trunc_level": 0.05435287156874711
+                    },
+                    "tmle": {
+                        "estimate": 0.4130188211471666,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.005237414892224068,
+                        "abs_bias": 0.005237414892224068,
+                        "g_trunc_level": 0.05435287156874711
+                    }
+                }
+            },
+            "gan": {
+                "diagnostics": {
+                    "orig_file": "./positivity/data/data_5.csv",
+                    "syn_file": "./gan_data/syn_clean.csv",
+                    "output_file": "./positivity/augmented_self_supervised/data_5_gan_self_supervised_pair.csv",
+                    "g_trunc_level": 0.06672937201261334,
+                    "n_orig": 200,
+                    "n_augmented": 270,
+                    "n_added": 70,
+                    "threshold": 0.001,
+                    "extreme_low_count": 70,
+                    "extreme_high_count": 0,
+                    "matched_low_added_as_treated": 70,
+                    "matched_high_added_as_control": 0,
+                    "used_synthetic_rows": 70,
+                    "min_ps_hat_raw": 0.0,
+                    "max_ps_hat_raw": 0.94,
+                    "min_ps_hat_trunc": 0.06672937201261334,
+                    "max_ps_hat_trunc": 0.9332706279873867
+                },
+                "estimators": {
+                    "aipw": {
+                        "estimate": 0.26881030551640406,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.1494459305229866,
+                        "abs_bias": 0.1494459305229866,
+                        "g_trunc_level": 0.05435287156874711
+                    },
+                    "ipw": {
+                        "estimate": 0.31590136343035674,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.10235487260903392,
+                        "abs_bias": 0.10235487260903392,
+                        "g_trunc_level": 0.05435287156874711
+                    },
+                    "outcome_regression": {
+                        "estimate": 0.2522962962962963,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.16595993974309436,
+                        "abs_bias": 0.16595993974309436,
+                        "g_trunc_level": 0.05435287156874711
+                    },
+                    "tmle": {
+                        "estimate": 0.3613348922886546,
+                        "ate_true": 0.41825623603939066,
+                        "bias": -0.05692134375073604,
+                        "abs_bias": 0.05692134375073604,
+                        "g_trunc_level": 0.05435287156874711
+                    }
+                }
+            }
+        }
+    }
+}

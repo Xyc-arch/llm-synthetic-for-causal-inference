@@ -7,7 +7,7 @@ from be_great import GReaT
 
 
 def main():
-    # Folder containing this script, e.g. /home/ubuntu/syn_causal/privacy
+    # Folder containing this script
     script_dir = Path(__file__).resolve().parent
 
     # Paths

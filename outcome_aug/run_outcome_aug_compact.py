@@ -6,7 +6,7 @@ import statsmodels.api as sm
 from scipy.special import logit, expit
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-PROJECT_ROOT = "/home/ubuntu/syn_causal"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_ROOT, "outcome_aug", "data")
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "outcome_aug", "results")
 

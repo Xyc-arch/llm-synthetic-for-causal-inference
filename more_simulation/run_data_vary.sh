@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd /home/ubuntu/syn_causal/more_simulation
+cd "$(dirname "$0")"
 
 echo "Generating varied simulation datasets..."
 python data_vary.py --output-root simulator_vary_data

@@ -3,7 +3,7 @@ import os
 import json
 import matplotlib.pyplot as plt
 
-PROJECT_ROOT = "/home/ubuntu/syn_causal"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ACTG_DIR = os.path.join(PROJECT_ROOT, "actg175")
 
 INPUT_JSON = os.path.join(ACTG_DIR, "results", "simulation_engine_synth_only.json")

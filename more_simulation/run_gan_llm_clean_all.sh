@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd /home/ubuntu/syn_causal/more_simulation
+cd "$(dirname "$0")"
 
 ROOT="simulator_vary_data"
 

@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-# This script lives in /home/ubuntu/syn_causal/actg175/
+# This script lives in the actg175/ directory
 ACTG_DIR = Path(__file__).resolve().parent
 
 # Real ACTG file

@@ -1,0 +1,195 @@
+{
+  "data_test": {
+    "file": "./data_test.csv",
+    "distance_cols": [
+      "W1",
+      "W2",
+      "W3",
+      "W4",
+      "W5",
+      "W6",
+      "A",
+      "Y"
+    ],
+    "summary": {
+      "mean": 0.650335,
+      "std": 0.362753,
+      "median": 0.582166,
+      "min": 0.0229,
+      "max": 2.569597,
+      "n": 1000
+    }
+  },
+  "llm_syn_hybrid": {
+    "file": "./llm_data/syn_hybrid.csv",
+    "distance_cols": [
+      "W1",
+      "W2",
+      "W3",
+      "W4",
+      "W5",
+      "W6",
+      "A",
+      "Y"
+    ],
+    "summary": {
+      "mean": 0.548509,
+      "std": 0.316479,
+      "median": 0.484805,
+      "min": 0.028356,
+      "max": 2.461732,
+      "n": 5000
+    },
+    "repeated_mean_summary": {
+      "mean": 0.548509,
+      "std": 0.014293,
+      "se": 0.006392,
+      "ci95_low": 0.535981,
+      "ci95_high": 0.561038,
+      "n_reps": 5,
+      "seeds": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "values": [
+        0.561293,
+        0.555604,
+        0.535446,
+        0.559411,
+        0.530792
+      ]
+    }
+  },
+  "llm_syn_clean": {
+    "file": "./llm_data/syn_clean.csv",
+    "distance_cols": [
+      "W1",
+      "W2",
+      "W3",
+      "W4",
+      "W5",
+      "W6",
+      "A",
+      "Y"
+    ],
+    "summary": {
+      "mean": 0.60766,
+      "std": 0.344324,
+      "median": 0.534207,
+      "min": 0.050342,
+      "max": 3.118324,
+      "n": 5000
+    },
+    "repeated_mean_summary": {
+      "mean": 0.60766,
+      "std": 0.009297,
+      "se": 0.004158,
+      "ci95_low": 0.599511,
+      "ci95_high": 0.615809,
+      "n_reps": 5,
+      "seeds": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "values": [
+        0.613889,
+        0.619193,
+        0.595205,
+        0.603466,
+        0.606547
+      ]
+    }
+  },
+  "gan_syn_hybrid": {
+    "file": "./gan_data/syn_hybrid.csv",
+    "distance_cols": [
+      "W1",
+      "W2",
+      "W3",
+      "W4",
+      "W5",
+      "W6",
+      "A",
+      "Y"
+    ],
+    "summary": {
+      "mean": 1.060568,
+      "std": 0.660323,
+      "median": 0.901979,
+      "min": 0.028804,
+      "max": 4.714483,
+      "n": 5000
+    },
+    "repeated_mean_summary": {
+      "mean": 1.060568,
+      "std": 0.023927,
+      "se": 0.010701,
+      "ci95_low": 1.039594,
+      "ci95_high": 1.081541,
+      "n_reps": 5,
+      "seeds": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "values": [
+        1.067157,
+        1.083016,
+        1.060526,
+        1.071784,
+        1.020356
+      ]
+    }
+  },
+  "gan_syn_clean": {
+    "file": "./gan_data/syn_clean.csv",
+    "distance_cols": [
+      "W1",
+      "W2",
+      "W3",
+      "W4",
+      "W5",
+      "W6",
+      "A",
+      "Y"
+    ],
+    "summary": {
+      "mean": 1.189635,
+      "std": 0.675366,
+      "median": 1.051161,
+      "min": 0.043713,
+      "max": 4.619264,
+      "n": 5000
+    },
+    "repeated_mean_summary": {
+      "mean": 1.189635,
+      "std": 0.015813,
+      "se": 0.007072,
+      "ci95_low": 1.175774,
+      "ci95_high": 1.203496,
+      "n_reps": 5,
+      "seeds": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "values": [
+        1.17679,
+        1.195775,
+        1.17454,
+        1.21342,
+        1.18765
+      ]
+    }
+  }
+}

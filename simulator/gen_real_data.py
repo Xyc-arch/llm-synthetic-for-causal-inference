@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.special import expit
 
-OUT_DIR = "/home/ubuntu/syn_causal/simulator/real_data_n1000_rct"
+OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "real_data_n1000_rct")
 TRUTH_PATH = os.path.join(OUT_DIR, "truth.json")
 
 N_DATASETS = 20

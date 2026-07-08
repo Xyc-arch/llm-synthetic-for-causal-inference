@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from ctgan import CTGAN
 
-# Folder containing this script, e.g. /home/ubuntu/syn_causal/privacy
+# Folder containing this script
 SCRIPT_DIR = Path(__file__).resolve().parent
 
 # Input cleaned ACTG175 data

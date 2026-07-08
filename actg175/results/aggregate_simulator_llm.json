@@ -1,0 +1,289 @@
+{
+    "source": "llm",
+    "n_full_pool": 49749,
+    "full_synth_tmle": -23.5240082032769,
+    "full_synth_estimates": {
+        "ipw": {
+            "label": "IPW",
+            "estimate": -21.592101575542642,
+            "diff_from_full_tmle": 1.9319066277342571
+        },
+        "tmle_continuous": {
+            "label": "TMLE",
+            "estimate": -23.5240082032769,
+            "diff_from_full_tmle": 0.0
+        },
+        "aipw_continuous": {
+            "label": "AIPW",
+            "estimate": -22.878686925682295,
+            "diff_from_full_tmle": 0.6453212775946042
+        },
+        "outcome_regression_continuous": {
+            "label": "OR",
+            "estimate": -22.707362871722946,
+            "diff_from_full_tmle": 0.8166453315539535
+        }
+    },
+    "by_sample_size": {
+        "100": {
+            "ipw": {
+                "label": "IPW",
+                "bias_vs_full_tmle": 3.9297506508083586,
+                "mse_vs_full_tmle": 188.51772134207243,
+                "diff_mean_from_own_full": 1.9978440230741015
+            },
+            "tmle_continuous": {
+                "label": "TMLE",
+                "bias_vs_full_tmle": -2.291199463865066,
+                "mse_vs_full_tmle": 32.59034288322163,
+                "diff_mean_from_own_full": -2.291199463865066
+            },
+            "aipw_continuous": {
+                "label": "AIPW",
+                "bias_vs_full_tmle": 10.154284216765529,
+                "mse_vs_full_tmle": 131.07882401711072,
+                "diff_mean_from_own_full": 9.508962939170924
+            },
+            "outcome_regression_continuous": {
+                "label": "OR",
+                "bias_vs_full_tmle": 13.277921082556198,
+                "mse_vs_full_tmle": 207.04238919357167,
+                "diff_mean_from_own_full": 12.461275751002244
+            }
+        },
+        "200": {
+            "ipw": {
+                "label": "IPW",
+                "bias_vs_full_tmle": 1.2069608270808914,
+                "mse_vs_full_tmle": 120.71486090476597,
+                "diff_mean_from_own_full": -0.7249458006533658
+            },
+            "tmle_continuous": {
+                "label": "TMLE",
+                "bias_vs_full_tmle": -2.0447601330262266,
+                "mse_vs_full_tmle": 13.497333902747815,
+                "diff_mean_from_own_full": -2.0447601330262266
+            },
+            "aipw_continuous": {
+                "label": "AIPW",
+                "bias_vs_full_tmle": 8.330342523938524,
+                "mse_vs_full_tmle": 74.76841431693732,
+                "diff_mean_from_own_full": 7.68502124634392
+            },
+            "outcome_regression_continuous": {
+                "label": "OR",
+                "bias_vs_full_tmle": 10.925029894226531,
+                "mse_vs_full_tmle": 126.00990611723205,
+                "diff_mean_from_own_full": 10.108384562672578
+            }
+        },
+        "300": {
+            "ipw": {
+                "label": "IPW",
+                "bias_vs_full_tmle": 4.553147288130209,
+                "mse_vs_full_tmle": 84.77196619323524,
+                "diff_mean_from_own_full": 2.6212406603959515
+            },
+            "tmle_continuous": {
+                "label": "TMLE",
+                "bias_vs_full_tmle": -1.1074099390329337,
+                "mse_vs_full_tmle": 13.010648353274217,
+                "diff_mean_from_own_full": -1.1074099390329337
+            },
+            "aipw_continuous": {
+                "label": "AIPW",
+                "bias_vs_full_tmle": 7.581569619898243,
+                "mse_vs_full_tmle": 63.93006906914919,
+                "diff_mean_from_own_full": 6.936248342303639
+            },
+            "outcome_regression_continuous": {
+                "label": "OR",
+                "bias_vs_full_tmle": 9.704301859486323,
+                "mse_vs_full_tmle": 101.27916760409559,
+                "diff_mean_from_own_full": 8.88765652793237
+            }
+        },
+        "400": {
+            "ipw": {
+                "label": "IPW",
+                "bias_vs_full_tmle": -0.6901481499231501,
+                "mse_vs_full_tmle": 50.69594705014361,
+                "diff_mean_from_own_full": -2.6220547776574072
+            },
+            "tmle_continuous": {
+                "label": "TMLE",
+                "bias_vs_full_tmle": -1.6778405351737042,
+                "mse_vs_full_tmle": 8.72361059335079,
+                "diff_mean_from_own_full": -1.6778405351737042
+            },
+            "aipw_continuous": {
+                "label": "AIPW",
+                "bias_vs_full_tmle": 5.401775557279642,
+                "mse_vs_full_tmle": 36.72390720749269,
+                "diff_mean_from_own_full": 4.7564542796850375
+            },
+            "outcome_regression_continuous": {
+                "label": "OR",
+                "bias_vs_full_tmle": 7.2473153398288055,
+                "mse_vs_full_tmle": 61.2840445280912,
+                "diff_mean_from_own_full": 6.430670008274852
+            }
+        },
+        "500": {
+            "ipw": {
+                "label": "IPW",
+                "bias_vs_full_tmle": 3.5026383777238514,
+                "mse_vs_full_tmle": 56.73817077416222,
+                "diff_mean_from_own_full": 1.5707317499895943
+            },
+            "tmle_continuous": {
+                "label": "TMLE",
+                "bias_vs_full_tmle": -1.5310365278498068,
+                "mse_vs_full_tmle": 5.247217626877601,
+                "diff_mean_from_own_full": -1.5310365278498068
+            },
+            "aipw_continuous": {
+                "label": "AIPW",
+                "bias_vs_full_tmle": 5.468961224338599,
+                "mse_vs_full_tmle": 34.0439391058823,
+                "diff_mean_from_own_full": 4.823639946743995
+            },
+            "outcome_regression_continuous": {
+                "label": "OR",
+                "bias_vs_full_tmle": 7.222305285197081,
+                "mse_vs_full_tmle": 57.17287056852896,
+                "diff_mean_from_own_full": 6.405659953643127
+            }
+        },
+        "600": {
+            "ipw": {
+                "label": "IPW",
+                "bias_vs_full_tmle": 1.925904774023568,
+                "mse_vs_full_tmle": 46.017285075491884,
+                "diff_mean_from_own_full": -0.006001853710689176
+            },
+            "tmle_continuous": {
+                "label": "TMLE",
+                "bias_vs_full_tmle": -1.2073389055680757,
+                "mse_vs_full_tmle": 4.854552486250454,
+                "diff_mean_from_own_full": -1.2073389055680757
+            },
+            "aipw_continuous": {
+                "label": "AIPW",
+                "bias_vs_full_tmle": 5.216252992439195,
+                "mse_vs_full_tmle": 29.429166701298804,
+                "diff_mean_from_own_full": 4.5709317148445905
+            },
+            "outcome_regression_continuous": {
+                "label": "OR",
+                "bias_vs_full_tmle": 6.863688425495987,
+                "mse_vs_full_tmle": 49.378252757638755,
+                "diff_mean_from_own_full": 6.047043093942033
+            }
+        },
+        "700": {
+            "ipw": {
+                "label": "IPW",
+                "bias_vs_full_tmle": 1.8951457878543678,
+                "mse_vs_full_tmle": 33.80415182096417,
+                "diff_mean_from_own_full": -0.03676083987988932
+            },
+            "tmle_continuous": {
+                "label": "TMLE",
+                "bias_vs_full_tmle": -0.9191986330487012,
+                "mse_vs_full_tmle": 2.916459451262325,
+                "diff_mean_from_own_full": -0.9191986330487012
+            },
+            "aipw_continuous": {
+                "label": "AIPW",
+                "bias_vs_full_tmle": 4.909901338089849,
+                "mse_vs_full_tmle": 26.105431839096106,
+                "diff_mean_from_own_full": 4.264580060495245
+            },
+            "outcome_regression_continuous": {
+                "label": "OR",
+                "bias_vs_full_tmle": 6.427387752412738,
+                "mse_vs_full_tmle": 43.35273314842233,
+                "diff_mean_from_own_full": 5.610742420858784
+            }
+        },
+        "800": {
+            "ipw": {
+                "label": "IPW",
+                "bias_vs_full_tmle": 1.9883588704435091,
+                "mse_vs_full_tmle": 25.623883650366775,
+                "diff_mean_from_own_full": 0.056452242709251976
+            },
+            "tmle_continuous": {
+                "label": "TMLE",
+                "bias_vs_full_tmle": -0.6363581583565505,
+                "mse_vs_full_tmle": 1.4704944851986848,
+                "diff_mean_from_own_full": -0.6363581583565505
+            },
+            "aipw_continuous": {
+                "label": "AIPW",
+                "bias_vs_full_tmle": 5.078603502507818,
+                "mse_vs_full_tmle": 27.322631313289357,
+                "diff_mean_from_own_full": 4.4332822249132136
+            },
+            "outcome_regression_continuous": {
+                "label": "OR",
+                "bias_vs_full_tmle": 6.568373489873046,
+                "mse_vs_full_tmle": 45.01737991001588,
+                "diff_mean_from_own_full": 5.751728158319093
+            }
+        },
+        "900": {
+            "ipw": {
+                "label": "IPW",
+                "bias_vs_full_tmle": 2.627264644546649,
+                "mse_vs_full_tmle": 31.242052068963396,
+                "diff_mean_from_own_full": 0.6953580168123921
+            },
+            "tmle_continuous": {
+                "label": "TMLE",
+                "bias_vs_full_tmle": -0.45950473996918717,
+                "mse_vs_full_tmle": 1.6808364215084743,
+                "diff_mean_from_own_full": -0.45950473996918717
+            },
+            "aipw_continuous": {
+                "label": "AIPW",
+                "bias_vs_full_tmle": 4.752871462821428,
+                "mse_vs_full_tmle": 24.094371453277272,
+                "diff_mean_from_own_full": 4.107550185226824
+            },
+            "outcome_regression_continuous": {
+                "label": "OR",
+                "bias_vs_full_tmle": 6.1000402749588325,
+                "mse_vs_full_tmle": 38.971475789083286,
+                "diff_mean_from_own_full": 5.283394943404879
+            }
+        },
+        "1000": {
+            "ipw": {
+                "label": "IPW",
+                "bias_vs_full_tmle": 1.4066614957589785,
+                "mse_vs_full_tmle": 29.298919793903828,
+                "diff_mean_from_own_full": -0.5252451319752787
+            },
+            "tmle_continuous": {
+                "label": "TMLE",
+                "bias_vs_full_tmle": -0.8140168149629687,
+                "mse_vs_full_tmle": 1.8414131916524572,
+                "diff_mean_from_own_full": -0.8140168149629687
+            },
+            "aipw_continuous": {
+                "label": "AIPW",
+                "bias_vs_full_tmle": 4.096264729908437,
+                "mse_vs_full_tmle": 18.653143221081766,
+                "diff_mean_from_own_full": 3.450943452313833
+            },
+            "outcome_regression_continuous": {
+                "label": "OR",
+                "bias_vs_full_tmle": 5.370560857085323,
+                "mse_vs_full_tmle": 31.014646292926365,
+                "diff_mean_from_own_full": 4.5539155255313695
+            }
+        }
+    }
+}

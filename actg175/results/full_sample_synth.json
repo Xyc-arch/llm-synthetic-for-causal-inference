@@ -1,0 +1,48 @@
+{
+    "llm": {
+        "source_file": "./actg175/llm_data/syn_hybrid.csv",
+        "n_full_pool": 49749,
+        "estimates": {
+            "ipw": -21.592101575542642,
+            "tmle_continuous": -23.5240082032769,
+            "aipw_continuous": -22.878686925682295,
+            "outcome_regression_continuous": -22.707362871722946
+        },
+        "tmle_reference": -23.5240082032769,
+        "differences_from_tmle": {
+            "ipw": 1.9319066277342571,
+            "tmle_continuous": 0.0,
+            "aipw_continuous": 0.6453212775946042,
+            "outcome_regression_continuous": 0.8166453315539535
+        },
+        "absolute_differences_from_tmle": {
+            "ipw": 1.9319066277342571,
+            "tmle_continuous": 0.0,
+            "aipw_continuous": 0.6453212775946042,
+            "outcome_regression_continuous": 0.8166453315539535
+        }
+    },
+    "ctgan": {
+        "source_file": "./actg175/ctgan_data/syn_hybrid.csv",
+        "n_full_pool": 20535,
+        "estimates": {
+            "ipw": -14.24504235067576,
+            "tmle_continuous": -17.16290179254097,
+            "aipw_continuous": -15.969733369911548,
+            "outcome_regression_continuous": -15.646097424165808
+        },
+        "tmle_reference": -17.16290179254097,
+        "differences_from_tmle": {
+            "ipw": 2.917859441865211,
+            "tmle_continuous": 0.0,
+            "aipw_continuous": 1.193168422629423,
+            "outcome_regression_continuous": 1.5168043683751637
+        },
+        "absolute_differences_from_tmle": {
+            "ipw": 2.917859441865211,
+            "tmle_continuous": 0.0,
+            "aipw_continuous": 1.193168422629423,
+            "outcome_regression_continuous": 1.5168043683751637
+        }
+    }
+}

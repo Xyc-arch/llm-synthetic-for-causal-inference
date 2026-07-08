@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-# This script lives in /home/ubuntu/syn_causal/actg175/
+# This script lives in the actg175/ directory
 ACTG_DIR = Path(__file__).resolve().parent
 
 RAW_FILE = ACTG_DIR / "actg175.csv"

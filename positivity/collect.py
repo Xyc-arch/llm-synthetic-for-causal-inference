@@ -3,7 +3,7 @@ import os
 import json
 import pandas as pd
 
-PROJECT_ROOT = "/home/ubuntu/syn_causal"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "positivity", "results")
 
 INPUT_CSV = os.path.join(RESULTS_DIR, "all_results_by_n_mse_summary.csv")

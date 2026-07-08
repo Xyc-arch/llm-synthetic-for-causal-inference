@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.special import expit
 
-OUT_DIR = "/home/ubuntu/syn_causal/outcome_aug/data"
+OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 TRUTH_PATH = os.path.join(OUT_DIR, "truth.json")
 SEEDS = [1, 2, 3, 4, 5]
 N_PER_DATASET = 200

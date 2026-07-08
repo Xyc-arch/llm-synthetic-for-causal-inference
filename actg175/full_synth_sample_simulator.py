@@ -4,7 +4,7 @@ import sys
 import json
 import pandas as pd
 
-PROJECT_ROOT = "/home/ubuntu/syn_causal"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ACTG_DIR = os.path.join(PROJECT_ROOT, "actg175")
 
 if PROJECT_ROOT not in sys.path:

@@ -4,14 +4,14 @@ from pathlib import Path
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-# Folder containing this script, e.g. /home/ubuntu/syn_causal/privacy
+# Folder containing this script
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = SCRIPT_DIR.parent
 
 # Input ACTG175 file
 ACTG175_PATH = PROJECT_DIR / "actg175" / "actg175.csv"
 
-# Output folder under this script folder: /home/ubuntu/syn_causal/privacy/data
+# Output folder under this script folder
 DATA_DIR = SCRIPT_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
