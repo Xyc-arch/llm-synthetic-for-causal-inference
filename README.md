@@ -103,10 +103,13 @@ from the committed data.
 ## Citation
 
 ```bibtex
-@inproceedings{xu2026generative,
-  title     = {Generative Synthetic Data for Causal Inference: Pitfalls, Remedies, and Opportunities},
-  author    = {Xu, Yichen},
-  booktitle = {STAI-X},
-  year      = {2026}
+@misc{xu2026generativesyntheticdatacausal,
+      title={Generative Synthetic Data for Causal Inference: Pitfalls, Remedies, and Opportunities}, 
+      author={Yichen Xu},
+      year={2026},
+      eprint={2604.23904},
+      archivePrefix={arXiv},
+      primaryClass={stat.ME},
+      url={https://arxiv.org/abs/2604.23904}, 
 }
 ```
