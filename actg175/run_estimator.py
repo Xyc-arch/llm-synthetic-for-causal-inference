@@ -2,6 +2,8 @@
 import os
 import sys
 import json
+from functools import partial
+
 import numpy as np
 import pandas as pd
 
@@ -39,6 +41,12 @@ DATASETS = {
     "ctgan_syn_clean": os.path.join(ACTG_DIR, "ctgan_data", "syn_clean.csv"),
     "ctgan_syn_hybrid": os.path.join(ACTG_DIR, "ctgan_data", "syn_hybrid.csv"),
 }
+
+
+def repo_rel(path):
+    # store repo-relative paths in results so no machine-specific
+    # absolute paths leak into committed artifacts
+    return "./" + os.path.relpath(path, PROJECT_ROOT)
 
 
 def load_original_actg():
@@ -138,7 +146,7 @@ def evaluate_dataset(path, estimator_fn, estimator_name, original_df):
     estimates = np.array(estimates, dtype=float)
 
     return {
-        "file": path,
+        "file": repo_rel(path),
         "estimator": estimator_name,
         "n_full": int(n),
         "subsample_n": int(subsample_n),
@@ -157,16 +165,20 @@ def main():
     original_df = load_original_actg()
 
     results = {
-        "original_file": ORIGINAL_FILE,
+        "original_file": repo_rel(ORIGINAL_FILE),
         "subsample_n": SUBSAMPLE_N,
         "seeds": SEEDS,
         "datasets": {},
     }
 
     estimators = {
-        "aipw": estimate_aipw_df,
+        # cd420 is a continuous outcome; without this flag estimate_aipw_df
+        # falls back to its binary default and Table 3 AIPW cannot be reproduced
+        "aipw": partial(estimate_aipw_df, outcome_type="continuous"),
         "ipw": estimate_ipw_df,
-        "outcome_regression": estimate_outcome_regression_df,
+        "outcome_regression": partial(
+            estimate_outcome_regression_df, outcome_type="continuous"
+        ),
         "tmle_continuous": estimate_tmle_continuous_df,
     }
 
